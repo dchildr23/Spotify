@@ -1,0 +1,49 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+%matplotlib inline
+
+df = pd.read_csv('dataset.csv')
+
+df.head()
+df.info()
+
+df.dropna(inplace = True)
+key_vars = ['popularity','danceability', 'energy', 'loudness','tempo', 'liveness', 'valence']
+df2 = df[key_vars]
+df2 = df2.sample(frac=0.1, random_state=42)
+df2.head()
+
+corr = df2.corr()
+sns.heatmap(corr)
+
+x = df2[key_vars]
+y = df2['popularity']
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler().fit(x)
+x_scaled = pd.DataFrame(scaler.fit_transform(x), columns = x.columns, index = x.index)
+
+print(np.mean(x_scaled, axis=0))
+print(np.std(x_scaled, axis=0))
+
+x_scaled.head()
+
+from sklearn import svm, tree
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, random_state = 0)
+
+clf1 = svm.SVC()
+clf1.fit(x_train, y_train)
+predictions1 = clf1.predict(x_test)
+score1 = accuracy_score(y_test, predictions1)
+print(score1)
+
+clf2 = tree.DecisionTreeClassifier()
+clf2.fit(x_train, y_train)
+predictions2 = clf2.predict(x_test) 
+score2 = accuracy_score(y_test, predictions2)
+print(score2) 
