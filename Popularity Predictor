@@ -1,26 +1,32 @@
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 %matplotlib inline
 
+#Getting spotify dataset from Kaggle with popularity score and audio features
 df = pd.read_csv('dataset.csv')
 
 df.head()
 df.info()
 
+#Cleaning and picking out key audio features that are integer based
 df.dropna(inplace = True)
 key_vars = ['popularity','danceability', 'energy', 'loudness','tempo', 'liveness', 'valence']
 df2 = df[key_vars]
 df2 = df2.sample(frac=0.1, random_state=42)
 df2.head()
 
+#Initial analysis for checking correlation between features 
 corr = df2.corr()
 sns.heatmap(corr)
+
 
 x = df2[key_vars]
 y = df2['popularity']
 
+#Preprocessing data and scaling to ensure accurate training
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler().fit(x)
 x_scaled = pd.DataFrame(scaler.fit_transform(x), columns = x.columns, index = x.index)
@@ -30,10 +36,12 @@ print(np.std(x_scaled, axis=0))
 
 x_scaled.head()
 
+#Utilizing SVM and Decision Tree to compare accuracy scores for predicting popularity score based on the audio features
 from sklearn import svm, tree
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
+#Splitting dataset into train/test 
 x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, random_state = 0)
 
 clf1 = svm.SVC()
