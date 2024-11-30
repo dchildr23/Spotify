@@ -3,10 +3,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
-%matplotlib inline
+# %matplotlib inline
 
 #Getting spotify dataset from Kaggle with popularity score and audio features
-df = pd.read_csv('dataset.csv')
+df = pd.read_csv('Spotify Tracks Dataset.csv')
 
 df.head()
 df.info()
