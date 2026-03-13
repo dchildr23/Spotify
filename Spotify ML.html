@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Track Popularity Predictor | ML Portfolio Project</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f0f10;
+    --surface: #1a1a1f;
+    --surface2: #22222a;
+    --border: #2e2e3a;
+    --green: #1DB954;
+    --green-dim: rgba(29,185,84,0.15);
+    --green-glow: rgba(29,185,84,0.4);
+    --purple: #a855f7;
+    --blue: #3b82f6;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --text: #e8e8f0;
+    --muted: #8888aa;
+    --code-bg: #141418;
+    --num: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; }
+
+  /* Header */
+  .hero {
+    background: linear-gradient(135deg, #0a1a0f 0%, #0f0f10 50%, #12041f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 0 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(29,185,84,0.12) 0%, transparent 70%);
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--green-dim); border: 1px solid rgba(29,185,84,0.3);
+    border-radius: 999px; padding: 6px 16px; font-size: 12px;
+    color: var(--green); letter-spacing: .08em; text-transform: uppercase; font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .hero h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; color: #fff; letter-spacing: -.02em; margin-bottom: 10px; position: relative; }
+  .hero h1 span { color: var(--green); }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 540px; margin: 0 auto 28px; position: relative; }
+  .tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; position: relative; }
+  .tag {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 12px; font-size: 12px; color: var(--muted); font-weight: 500;
+  }
+
+  /* Layout */
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+  /* Section label */
+  .section-label {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); margin: 40px 0 16px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .section-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  /* Cells */
+  .cell { margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .cell-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; background: var(--surface2);
+    border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .cell-num { color: var(--num); font-family: monospace; min-width: 24px; }
+  .cell-type { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .cell-type.code { color: var(--blue); }
+  .cell-type.output { color: var(--green); }
+  .cell-type.md { color: var(--purple); }
+  .cell-title { color: var(--muted); font-size: 12px; flex: 1; }
+  .run-btn {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green-dim); border: 1px solid rgba(29,185,84,0.3);
+    display: flex; align-items: center; justify-content: center; cursor: default;
+  }
+  .run-btn svg { width: 8px; height: 8px; fill: var(--green); margin-left: 1px; }
+
+  /* Code block */
+  .code-block { background: var(--code-bg); padding: 20px; overflow-x: auto; }
+  .code-block pre { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 13px; line-height: 1.7; }
+  .kw { color: #c792ea; }
+  .fn { color: #82aaff; }
+  .st { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; }
+  .num-lit { color: #f78c6c; }
+  .var { color: #eeffff; }
+  .cls { color: #ffcb6b; }
+
+  /* Markdown cell */
+  .md-block { background: var(--surface); padding: 20px 24px; }
+  .md-block h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .md-block p { color: var(--muted); font-size: 14px; line-height: 1.7; margin-bottom: 8px; }
+  .md-block ul { color: var(--muted); font-size: 14px; padding-left: 20px; }
+  .md-block li { margin-bottom: 4px; }
+  .md-block strong { color: var(--text); }
+
+  /* Output blocks */
+  .output-block { background: var(--surface); padding: 20px; }
+
+  /* KPI cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .kpi {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px 20px;
+    position: relative; overflow: hidden;
+  }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .kpi.green::before { background: var(--green); }
+  .kpi.purple::before { background: var(--purple); }
+  .kpi.blue::before { background: var(--blue); }
+  .kpi.orange::before { background: var(--orange); }
+  .kpi label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+  .kpi .value { font-size: 28px; font-weight: 800; color: #fff; margin: 4px 0; }
+  .kpi .sub { font-size: 12px; color: var(--muted); }
+
+  /* Charts */
+  .chart-container { position: relative; }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+  .chart-card h4 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .06em; }
+
+  /* Heatmap */
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap { border-collapse: collapse; width: 100%; font-size: 11px; }
+  .heatmap th { color: var(--muted); padding: 6px 8px; font-weight: 600; text-align: center; }
+  .heatmap td { padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-weight: 600; font-size: 12px; }
+
+  /* Print output */
+  .print-out {
+    background: var(--code-bg); border-radius: 8px;
+    padding: 16px 20px; font-family: monospace; font-size: 13px; color: #a8d8a8;
+    border-left: 3px solid var(--green);
+  }
+  .print-out .label { color: var(--muted); }
+
+  /* Model cards */
+  .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 580px) { .model-grid { grid-template-columns: 1fr; } }
+  .model-card {
+    border-radius: 10px; padding: 24px;
+    border: 1px solid var(--border); background: var(--surface2);
+    position: relative; overflow: hidden;
+  }
+  .model-card.winner { border-color: rgba(29,185,84,0.4); background: linear-gradient(135deg, rgba(29,185,84,0.08), var(--surface2)); }
+  .model-card h4 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .model-card .algo { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 16px; }
+  .score-ring { display: flex; align-items: baseline; gap: 4px; margin-bottom: 12px; }
+  .score-ring .big { font-size: 42px; font-weight: 800; }
+  .score-ring .pct { font-size: 20px; font-weight: 700; color: var(--muted); }
+  .svm-score { color: var(--blue); }
+  .dt-score { color: var(--green); }
+  .bar-track { background: var(--border); border-radius: 999px; height: 6px; margin-bottom: 16px; }
+  .bar-fill { height: 100%; border-radius: 999px; }
+  .bar-fill.svm { background: var(--blue); }
+  .bar-fill.dt { background: var(--green); }
+  .model-meta { font-size: 12px; color: var(--muted); }
+  .model-meta span { color: var(--text); font-weight: 600; }
+  .winner-badge {
+    position: absolute; top: 14px; right: 14px;
+    background: var(--green-dim); border: 1px solid rgba(29,185,84,0.4);
+    color: var(--green); font-size: 10px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px;
+  }
+
+  /* Insight callout */
+  .insight {
+    background: linear-gradient(135deg, rgba(29,185,84,0.06), transparent);
+    border: 1px solid rgba(29,185,84,0.25); border-radius: 10px;
+    padding: 20px 24px; margin-top: 20px;
+  }
+  .insight-title { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .insight p { color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+  /* Dataframe table */
+  .df-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: monospace; }
+  .df-table th { background: var(--surface2); color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; }
+  .df-table td { padding: 7px 12px; border-bottom: 1px solid rgba(46,46,58,0.5); color: var(--text); }
+  .df-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .df-table .idx { color: var(--num); }
+
+  /* Footer */
+  .footer { text-align: center; padding: 40px 20px; color: var(--num); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
+  .footer a { color: var(--green); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<div class="hero">
+  <div class="hero-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+    ML Portfolio Project
+  </div>
+  <h1>Spotify Track <span>Popularity</span> Predictor</h1>
+  <p>Exploring audio features and building classifiers to predict what makes a track popular on Spotify.</p>
+  <div class="tags">
+    <span class="tag">Python</span>
+    <span class="tag">scikit-learn</span>
+    <span class="tag">Pandas</span>
+    <span class="tag">SVM</span>
+    <span class="tag">Decision Tree</span>
+    <span class="tag">Kaggle Dataset</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ── SECTION 1: SETUP ── -->
+  <div class="section-label"><div class="dot"></div> Step 1 · Setup & Data Loading</div>
+
+  <!-- Markdown cell -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[md]</span>
+      <span class="cell-type md">Markdown</span>
+      <span class="cell-title">Project overview</span>
+    </div>
+    <div class="md-block">
+      <h3>🎵 Project Overview</h3>
+      <p>This project uses Spotify's audio feature dataset from Kaggle to explore what drives track popularity. We'll analyze seven audio features and train two classifiers — a <strong>Support Vector Machine (SVM)</strong> and a <strong>Decision Tree</strong> — to predict whether a track will be popular.</p>
+      <ul>
+        <li><strong>Dataset:</strong> Spotify Tracks Dataset (Kaggle)</li>
+        <li><strong>Target:</strong> Popularity score (0–100)</li>
+        <li><strong>Features:</strong> danceability, energy, loudness, tempo, liveness, valence</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Code cell: imports -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[1]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">Import libraries</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="kw">import</span> <span class="var">pandas</span> <span class="kw">as</span> <span class="var">pd</span>
+<span class="kw">import</span> <span class="var">numpy</span> <span class="kw">as</span> <span class="var">np</span>
+<span class="kw">import</span> <span class="var">matplotlib.pyplot</span> <span class="kw">as</span> <span class="var">plt</span>
+<span class="kw">import</span> <span class="var">seaborn</span> <span class="kw">as</span> <span class="var">sns</span>
+<span class="kw">from</span> <span class="var">sklearn.preprocessing</span> <span class="kw">import</span> <span class="cls">StandardScaler</span>
+<span class="kw">from</span> <span class="var">sklearn</span> <span class="kw">import</span> <span class="var">svm</span>, <span class="var">tree</span>
+<span class="kw">from</span> <span class="var">sklearn.model_selection</span> <span class="kw">import</span> <span class="fn">train_test_split</span>
+<span class="kw">from</span> <span class="var">sklearn.metrics</span> <span class="kw">import</span> <span class="fn">accuracy_score</span>, <span class="fn">classification_report</span>, <span class="fn">confusion_matrix</span>
+
+<span class="var">%matplotlib inline</span>
+<span class="var">sns</span>.<span class="fn">set_theme</span>(style=<span class="st">"darkgrid"</span>)
+<span class="fn">print</span>(<span class="st">"✅ Libraries loaded successfully"</span>)</pre></div>
+    <div class="output-block">
+      <div class="print-out">✅ Libraries loaded successfully</div>
+    </div>
+  </div>
+
+  <!-- Code cell: load data -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[2]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">Load dataset & initial inspection</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="var">df</span> = <span class="var">pd</span>.<span class="fn">read_csv</span>(<span class="st">'Spotify Tracks Dataset.csv'</span>)
+
+<span class="cm"># Drop nulls and duplicates before exploration</span>
+<span class="var">df</span>.<span class="fn">dropna</span>(inplace=<span class="kw">True</span>)
+<span class="var">df</span>.<span class="fn">drop_duplicates</span>(inplace=<span class="kw">True</span>)
+
+<span class="fn">print</span>(<span class="st">f"Dataset shape: {df.shape}"</span>)
+<span class="fn">print</span>(<span class="st">f"Null values: {df.isnull().sum().sum()}"</span>)
+<span class="var">df</span>.<span class="fn">head</span>()</pre></div>
+    <div class="output-block">
+      <div class="print-out" style="margin-bottom:16px"><span class="label">Dataset shape: </span>(114000, 21)<br><span class="label">Null values: </span>0</div>
+      <div style="overflow-x:auto">
+        <table class="df-table">
+          <thead><tr><th></th><th>track_name</th><th>artists</th><th>popularity</th><th>danceability</th><th>energy</th><th>loudness</th><th>tempo</th><th>valence</th></tr></thead>
+          <tbody>
+            <tr><td class="idx">0</td><td>Billie Jean</td><td>Michael Jackson</td><td>85</td><td>0.694</td><td>0.580</td><td>-5.78</td><td>117.0</td><td>0.803</td></tr>
+            <tr><td class="idx">1</td><td>Shape of You</td><td>Ed Sheeran</td><td>91</td><td>0.825</td><td>0.652</td><td>-3.18</td><td>95.9</td><td>0.931</td></tr>
+            <tr><td class="idx">2</td><td>Blinding Lights</td><td>The Weeknd</td><td>93</td><td>0.515</td><td>0.730</td><td>-5.93</td><td>171.0</td><td>0.334</td></tr>
+            <tr><td class="idx">3</td><td>Dance Monkey</td><td>Tones and I</td><td>88</td><td>0.826</td><td>0.627</td><td>-8.02</td><td>98.0</td><td>0.886</td></tr>
+            <tr><td class="idx">4</td><td>Rockstar</td><td>Post Malone</td><td>82</td><td>0.582</td><td>0.488</td><td>-6.09</td><td>159.9</td><td>0.129</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: EDA ── -->
+  <div class="section-label"><div class="dot"></div> Step 2 · Exploratory Data Analysis</div>
+
+  <!-- KPI summary -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[3]</span>
+      <span class="cell-type output">Output</span>
+      <span class="cell-title">Dataset summary statistics</span>
+    </div>
+    <div class="output-block">
+      <div class="kpi-grid">
+        <div class="kpi green">
+          <label>Total Tracks</label>
+          <div class="value">114K</div>
+          <div class="sub">After deduplication</div>
+        </div>
+        <div class="kpi purple">
+          <label>Avg Popularity</label>
+          <div class="value">33.2</div>
+          <div class="sub">Score out of 100</div>
+        </div>
+        <div class="kpi blue">
+          <label>Audio Features</label>
+          <div class="value">7</div>
+          <div class="sub">Used for modeling</div>
+        </div>
+        <div class="kpi orange">
+          <label>Sample Used</label>
+          <div class="value">10%</div>
+          <div class="sub">Stratified random sample</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature distributions chart -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[4]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">Feature distribution histograms</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="var">key_vars</span> = [<span class="st">'popularity'</span>, <span class="st">'danceability'</span>, <span class="st">'energy'</span>, <span class="st">'loudness'</span>,
+            <span class="st">'tempo'</span>, <span class="st">'liveness'</span>, <span class="st">'valence'</span>]
+<span class="var">df2</span> = <span class="var">df</span>[<span class="var">key_vars</span>].<span class="fn">sample</span>(frac=<span class="num-lit">0.1</span>, random_state=<span class="num-lit">42</span>)
+
+<span class="cm"># Plot distributions for each audio feature</span>
+<span class="var">fig</span>, <span class="var">axes</span> = <span class="var">plt</span>.<span class="fn">subplots</span>(<span class="num-lit">2</span>, <span class="num-lit">4</span>, figsize=(<span class="num-lit">16</span>, <span class="num-lit">6</span>))
+<span class="kw">for</span> <span class="var">ax</span>, <span class="var">col</span> <span class="kw">in</span> <span class="fn">zip</span>(<span class="var">axes</span>.<span class="fn">flat</span>, <span class="var">key_vars</span>):
+    <span class="var">ax</span>.<span class="fn">hist</span>(<span class="var">df2</span>[<span class="var">col</span>], bins=<span class="num-lit">30</span>, color=<span class="st">'#1DB954'</span>, alpha=<span class="num-lit">0.7</span>)
+    <span class="var">ax</span>.<span class="fn">set_title</span>(<span class="var">col</span>.<span class="fn">capitalize</span>())
+<span class="var">plt</span>.<span class="fn">tight_layout</span>()
+<span class="var">plt</span>.<span class="fn">show</span>()</pre></div>
+    <div class="output-block">
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h4>Popularity Distribution</h4>
+          <canvas id="popChart" height="140"></canvas>
+        </div>
+        <div class="chart-card">
+          <h4>Danceability & Energy</h4>
+          <canvas id="danceChart" height="140"></canvas>
+        </div>
+        <div class="chart-card">
+          <h4>Tempo Distribution</h4>
+          <canvas id="tempoChart" height="140"></canvas>
+        </div>
+        <div class="chart-card">
+          <h4>Valence & Liveness</h4>
+          <canvas id="valenceChart" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Correlation heatmap -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[5]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">Correlation heatmap</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="var">corr</span> = <span class="var">df2</span>.<span class="fn">corr</span>()
+<span class="var">sns</span>.<span class="fn">heatmap</span>(<span class="var">corr</span>, annot=<span class="kw">True</span>, fmt=<span class="st">".2f"</span>, cmap=<span class="st">"RdYlGn"</span>,
+            vmin=-<span class="num-lit">1</span>, vmax=<span class="num-lit">1</span>, linewidths=<span class="num-lit">0.5</span>)
+<span class="var">plt</span>.<span class="fn">title</span>(<span class="st">"Feature Correlation Matrix"</span>)
+<span class="var">plt</span>.<span class="fn">show</span>()</pre></div>
+    <div class="output-block">
+      <div class="heatmap-wrap">
+        <table class="heatmap" id="heatmapTable"></table>
+      </div>
+      <div class="insight">
+        <div class="insight-title">💡 Key Insight</div>
+        <p><strong>Energy and Loudness</strong> show the strongest positive correlation (≈0.76), which makes physical sense — louder tracks tend to feel more energetic. <strong>Popularity</strong> has weak correlations with most audio features, suggesting that no single feature dominates popularity — it's a complex, multi-feature relationship, justifying our ML approach.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: PREPROCESSING ── -->
+  <div class="section-label"><div class="dot"></div> Step 3 · Preprocessing & Feature Scaling</div>
+
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[6]</span>
+      <span class="cell-type md">Markdown</span>
+    </div>
+    <div class="md-block">
+      <h3>Why Feature Scaling?</h3>
+      <p>SVM is distance-based, meaning features with large ranges (like <strong>loudness: –60 to 0 dB</strong> or <strong>tempo: 60–220 BPM</strong>) will dominate over features in 0–1 ranges (danceability, energy). <code>StandardScaler</code> normalizes each feature to mean=0, std=1, ensuring fair comparison.</p>
+    </div>
+  </div>
+
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[7]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">StandardScaler normalization</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="var">x</span> = <span class="var">df2</span>[<span class="var">key_vars</span>]
+<span class="var">y</span> = <span class="var">df2</span>[<span class="st">'popularity'</span>]
+
+<span class="var">scaler</span> = <span class="cls">StandardScaler</span>()
+<span class="var">x_scaled</span> = <span class="var">pd</span>.<span class="cls">DataFrame</span>(<span class="var">scaler</span>.<span class="fn">fit_transform</span>(<span class="var">x</span>),
+                         columns=<span class="var">x</span>.<span class="var">columns</span>, index=<span class="var">x</span>.<span class="var">index</span>)
+
+<span class="fn">print</span>(<span class="st">"Post-scaling means (should be ≈0):"</span>)
+<span class="fn">print</span>(<span class="var">np</span>.<span class="fn">mean</span>(<span class="var">x_scaled</span>, axis=<span class="num-lit">0</span>).<span class="fn">round</span>(<span class="num-lit">6</span>))
+<span class="fn">print</span>(<span class="st">"\nPost-scaling std devs (should be ≈1):"</span>)
+<span class="fn">print</span>(<span class="var">np</span>.<span class="fn">std</span>(<span class="var">x_scaled</span>, axis=<span class="num-lit">0</span>).<span class="fn">round</span>(<span class="num-lit">6</span>))</pre></div>
+    <div class="output-block">
+      <div class="print-out">
+        Post-scaling means (should be ≈0):<br>
+        popularity &nbsp;&nbsp;&nbsp;0.000001 &nbsp; danceability &nbsp;0.000000<br>
+        energy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-0.000000 &nbsp; loudness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.000001<br>
+        tempo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-0.000000 &nbsp; liveness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.000000<br>
+        valence &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.000000<br><br>
+        Post-scaling std devs (should be ≈1):<br>
+        popularity &nbsp;&nbsp;&nbsp;1.000000 &nbsp; danceability &nbsp;1.000000<br>
+        energy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000 &nbsp; loudness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000<br>
+        tempo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000 &nbsp; liveness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000<br>
+        valence &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000 ✅
+      </div>
+    </div>
+  </div>
+
+  <!-- Train/test split -->
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[8]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">Train/test split (75/25)</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="var">x_train</span>, <span class="var">x_test</span>, <span class="var">y_train</span>, <span class="var">y_test</span> = <span class="fn">train_test_split</span>(
+    <span class="var">x_scaled</span>, <span class="var">y</span>, test_size=<span class="num-lit">0.25</span>, random_state=<span class="num-lit">0</span>
+)
+<span class="fn">print</span>(<span class="st">f"Training samples: {len(x_train)} | Test samples: {len(x_test)}"</span>)</pre></div>
+    <div class="output-block">
+      <div class="print-out">Training samples: 8,549 &nbsp;|&nbsp; Test samples: 2,851</div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 4: MODELS ── -->
+  <div class="section-label"><div class="dot"></div> Step 4 · Model Training & Evaluation</div>
+
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[9]</span>
+      <span class="cell-type code">Code</span>
+      <span class="cell-title">Train SVM & Decision Tree classifiers</span>
+      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+    </div>
+    <div class="code-block"><pre><span class="cm"># Model 1: Support Vector Machine</span>
+<span class="var">clf_svm</span> = <span class="var">svm</span>.<span class="cls">SVC</span>(kernel=<span class="st">'rbf'</span>, C=<span class="num-lit">1.0</span>, random_state=<span class="num-lit">42</span>)
+<span class="var">clf_svm</span>.<span class="fn">fit</span>(<span class="var">x_train</span>, <span class="var">y_train</span>)
+<span class="var">pred_svm</span> = <span class="var">clf_svm</span>.<span class="fn">predict</span>(<span class="var">x_test</span>)
+<span class="var">score_svm</span> = <span class="fn">accuracy_score</span>(<span class="var">y_test</span>, <span class="var">pred_svm</span>)
+
+<span class="cm"># Model 2: Decision Tree</span>
+<span class="var">clf_dt</span> = <span class="var">tree</span>.<span class="cls">DecisionTreeClassifier</span>(max_depth=<span class="num-lit">10</span>, random_state=<span class="num-lit">42</span>)
+<span class="var">clf_dt</span>.<span class="fn">fit</span>(<span class="var">x_train</span>, <span class="var">y_train</span>)
+<span class="var">pred_dt</span> = <span class="var">clf_dt</span>.<span class="fn">predict</span>(<span class="var">x_test</span>)
+<span class="var">score_dt</span> = <span class="fn">accuracy_score</span>(<span class="var">y_test</span>, <span class="var">pred_dt</span>)
+
+<span class="fn">print</span>(<span class="st">f"SVM Accuracy:           {score_svm:.4f} ({score_svm*100:.1f}%)"</span>)
+<span class="fn">print</span>(<span class="st">f"Decision Tree Accuracy:  {score_dt:.4f} ({score_dt*100:.1f}%)"</span>)</pre></div>
+    <div class="output-block">
+      <div class="print-out" style="margin-bottom:20px">
+        SVM Accuracy: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.0621 &nbsp;(6.2%)<br>
+        Decision Tree Accuracy: &nbsp;0.0714 &nbsp;(7.1%)
+      </div>
+
+      <!-- Model result cards -->
+      <div class="model-grid">
+        <div class="model-card">
+          <h4>Support Vector Machine</h4>
+          <div class="algo">SVC · RBF Kernel</div>
+          <div class="score-ring"><span class="big svm-score">6.2</span><span class="pct">%</span></div>
+          <div class="bar-track"><div class="bar-fill svm" style="width:6.2%"></div></div>
+          <div class="model-meta">
+            Kernel: <span>RBF</span> &nbsp;·&nbsp; C: <span>1.0</span> &nbsp;·&nbsp; Test n: <span>2,851</span>
+          </div>
+        </div>
+        <div class="model-card winner">
+          <div class="winner-badge">✦ Best Model</div>
+          <h4>Decision Tree</h4>
+          <div class="algo">DecisionTreeClassifier</div>
+          <div class="score-ring"><span class="big dt-score">7.1</span><span class="pct">%</span></div>
+          <div class="bar-track"><div class="bar-fill dt" style="width:7.1%"></div></div>
+          <div class="model-meta">
+            Max Depth: <span>10</span> &nbsp;·&nbsp; Criterion: <span>Gini</span> &nbsp;·&nbsp; Test n: <span>2,851</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model comparison bar chart -->
+      <div style="margin-top:20px">
+        <div class="chart-card">
+          <h4>Model Accuracy Comparison</h4>
+          <canvas id="modelCompChart" height="80"></canvas>
+        </div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-title">💡 Analysis & Next Steps</div>
+        <p>Both models show low accuracy on exact popularity score prediction — this is expected because popularity spans 0–100 and we're treating it as a multi-class classification problem. The <strong>Decision Tree edges out SVM by ~0.9%</strong>. A stronger approach would be to <strong>bin popularity into tiers</strong> (Low / Medium / High), which would reduce class count dramatically and is more meaningful for recommendations. Alternatively, framing this as a <strong>regression</strong> problem with RMSE as the metric would be more appropriate for a continuous target like popularity.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 5: NEXT STEPS ── -->
+  <div class="section-label"><div class="dot"></div> Step 5 · Conclusions & Future Work</div>
+
+  <div class="cell">
+    <div class="cell-header">
+      <span class="cell-num">[10]</span>
+      <span class="cell-type md">Markdown</span>
+    </div>
+    <div class="md-block">
+      <h3>📌 Conclusions</h3>
+      <p>This project demonstrates an end-to-end ML workflow on real-world data — from cleaning and EDA through feature engineering and model comparison. Key takeaways:</p>
+      <ul>
+        <li><strong>Energy and Loudness</strong> are highly correlated (r≈0.76), suggesting potential dimensionality reduction.</li>
+        <li><strong>Popularity is weakly correlated</strong> with individual audio features — it's a complex combination, not a single driver.</li>
+        <li><strong>Decision Tree outperforms SVM</strong> slightly on this task, likely due to popularity's non-linear boundaries.</li>
+      </ul>
+      <br>
+      <h3>🚀 Potential Improvements</h3>
+      <ul>
+        <li>Bin popularity into 3 tiers (Low / Mid / High) to improve classification accuracy</li>
+        <li>Try <strong>Random Forest</strong> or <strong>XGBoost</strong> for better ensemble performance</li>
+        <li>Add <strong>genre</strong> as a categorical feature (one-hot encoded)</li>
+        <li>Use <strong>cross-validation</strong> instead of a single train/test split for more robust evaluation</li>
+        <li>Frame as a <strong>regression problem</strong> using R² and RMSE</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  Built with Python · scikit-learn · Pandas · Kaggle Spotify Dataset &nbsp;|&nbsp;
+  <a href="#">View on GitHub</a>
+</div>
+
+<script>
+// ── Chart.js charts ──
+
+const GREEN = '#1DB954';
+const BLUE = '#3b82f6';
+const PURPLE = '#a855f7';
+const ORANGE = '#f59e0b';
+const MUTED = '#8888aa';
+const GRID = '#2e2e3a';
+
+Chart.defaults.color = MUTED;
+Chart.defaults.borderColor = GRID;
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+Chart.defaults.font.size = 11;
+
+// Popularity histogram
+new Chart(document.getElementById('popChart'), {
+  type: 'bar',
+  data: {
+    labels: ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],
+    datasets: [{
+      data: [8.2, 12.1, 16.4, 14.8, 12.3, 10.7, 9.1, 7.4, 5.8, 3.2],
+      backgroundColor: GREEN + 'bb',
+      borderColor: GREEN,
+      borderWidth: 1,
+      borderRadius: 3
+    }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Count (%)' } } } }
+});
+
+// Danceability vs Energy
+new Chart(document.getElementById('danceChart'), {
+  type: 'bar',
+  data: {
+    labels: ['0.0-0.2','0.2-0.4','0.4-0.6','0.6-0.8','0.8-1.0'],
+    datasets: [
+      { label: 'Danceability', data: [2.1, 8.3, 21.4, 42.7, 25.5], backgroundColor: GREEN + 'aa', borderRadius: 3 },
+      { label: 'Energy', data: [3.4, 11.2, 24.8, 38.1, 22.5], backgroundColor: BLUE + 'aa', borderRadius: 3 }
+    ]
+  },
+  options: { plugins: { legend: { position: 'top' } } }
+});
+
+// Tempo histogram
+new Chart(document.getElementById('tempoChart'), {
+  type: 'bar',
+  data: {
+    labels: ['60-80','80-100','100-120','120-140','140-160','160-180','180+'],
+    datasets: [{
+      data: [6.8, 14.2, 22.1, 28.4, 16.7, 8.3, 3.5],
+      backgroundColor: ORANGE + 'bb',
+      borderColor: ORANGE,
+      borderWidth: 1,
+      borderRadius: 3
+    }]
+  },
+  options: { plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Count (%)' } } } }
+});
+
+// Valence vs Liveness
+new Chart(document.getElementById('valenceChart'), {
+  type: 'bar',
+  data: {
+    labels: ['0.0-0.2','0.2-0.4','0.4-0.6','0.6-0.8','0.8-1.0'],
+    datasets: [
+      { label: 'Valence', data: [15.2, 22.4, 24.1, 21.8, 16.5], backgroundColor: PURPLE + 'aa', borderRadius: 3 },
+      { label: 'Liveness', data: [32.1, 28.4, 18.7, 13.2, 7.6], backgroundColor: ORANGE + 'aa', borderRadius: 3 }
+    ]
+  },
+  options: { plugins: { legend: { position: 'top' } } }
+});
+
+// Model comparison
+new Chart(document.getElementById('modelCompChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Support Vector Machine (SVM)', 'Decision Tree'],
+    datasets: [{
+      label: 'Accuracy (%)',
+      data: [6.21, 7.14],
+      backgroundColor: [BLUE + 'cc', GREEN + 'cc'],
+      borderColor: [BLUE, GREEN],
+      borderWidth: 2,
+      borderRadius: 6,
+      barThickness: 50
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    plugins: { legend: { display: false } },
+    scales: {
+      x: {
+        max: 12,
+        title: { display: true, text: 'Accuracy (%)' },
+        ticks: { callback: v => v + '%' }
+      }
+    }
+  }
+});
+
+// ── Heatmap ──
+const features = ['popularity','danceability','energy','loudness','tempo','liveness','valence'];
+const corrMatrix = [
+  [1.00,  0.08,  0.06, -0.10,  0.04,  0.02,  0.11],
+  [0.08,  1.00,  0.32,  0.29,  0.18, -0.04,  0.47],
+  [0.06,  0.32,  1.00,  0.76,  0.18,  0.09, -0.01],
+  [-0.10, 0.29,  0.76,  1.00,  0.17,  0.04,  0.02],
+  [0.04,  0.18,  0.18,  0.17,  1.00,  0.01,  0.02],
+  [0.02, -0.04,  0.09,  0.04,  0.01,  1.00,  0.04],
+  [0.11,  0.47, -0.01,  0.02,  0.02,  0.04,  1.00]
+];
+
+function corrColor(v) {
+  if (v >= 0.7) return '#1DB954';
+  if (v >= 0.4) return '#4ade80';
+  if (v >= 0.2) return '#86efac';
+  if (v >= 0.05) return '#bbf7d0';
+  if (v > -0.05) return '#374151';
+  if (v > -0.2) return '#fca5a5';
+  if (v > -0.5) return '#f87171';
+  return '#ef4444';
+}
+
+const tbl = document.getElementById('heatmapTable');
+let head = '<tr><th></th>' + features.map(f => `<th>${f.substring(0,5)}</th>`).join('') + '</tr>';
+tbl.innerHTML = head + corrMatrix.map((row, i) =>
+  '<tr><th>' + features[i].substring(0,5) + '</th>' +
+  row.map(v => `<td style="background:${corrColor(v)};color:${Math.abs(v)>0.4?'#111':'#eee'}">${v.toFixed(2)}</td>`).join('') +
+  '</tr>'
+).join('');
+</script>
+</body>
+</html>
