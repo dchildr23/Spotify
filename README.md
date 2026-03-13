@@ -20,7 +20,7 @@ This project uses the **Spotify Tracks Dataset** from Kaggle (~114,000 tracks) t
 5. **Modeling** — SVM and Decision Tree classifiers
 6. **Evaluation** — accuracy comparison and analysis
 
-📊 **[View the live interactive notebook →](https://dchildr23.github.io/spotify-ml-portfolio/spotify_ml_notebook.html)**
+📊 **[View the live interactive notebook →]([https://dchildr23.github.io/spotify-ml-portfolio/spotify_ml_notebook.html](https://dchildr23.github.io/Spotify/Spotify%20ML%20Notebook.html))**
 
 ---
 
