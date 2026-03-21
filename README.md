@@ -7,7 +7,6 @@
 [![XGBoost](https://img.shields.io/badge/XGBoost-1.7+-189AB4?style=flat)](https://xgboost.readthedocs.io)
 [![Pandas](https://img.shields.io/badge/Pandas-2.0+-150458?style=flat&logo=pandas&logoColor=white)](https://pandas.pydata.org)
 [![Dataset](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?style=flat&logo=kaggle&logoColor=white)](https://www.kaggle.com)
-[![License](https://img.shields.io/badge/License-MIT-1DB954?style=flat)](LICENSE)
 
 ---
 
