@@ -10,15 +10,8 @@ from sklearn.metrics import (
     accuracy_score, classification_report,
     mean_squared_error, r2_score, confusion_matrix
 )
-
-# ─── Optional: XGBoost (install with: pip install xgboost) ───────────────────
-try:
-    from xgboost import XGBClassifier, XGBRegressor
-    XGBOOST_AVAILABLE = True
-except ImportError:
-    print("⚠️  XGBoost not installed. Run: pip install xgboost")
-    print("   Continuing without XGBoost...\n")
-    XGBOOST_AVAILABLE = False
+from xgboost import XGBClassifier, XGBRegressor
+XGBOOST_AVAILABLE = True
 
 sns.set_theme(style="darkgrid")
 print("✅ Libraries loaded\n")
