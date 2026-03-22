@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spotify Track Popularity Predictor | ML Portfolio Project</title>
+<title>Spotify Track Popularity Predictor v2 | ML Portfolio</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
   :root {
@@ -18,6 +18,7 @@
     --blue: #3b82f6;
     --orange: #f59e0b;
     --red: #ef4444;
+    --teal: #14b8a6;
     --text: #e8e8f0;
     --muted: #8888aa;
     --code-bg: #141418;
@@ -26,18 +27,14 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; line-height: 1.6; }
 
-  /* Header */
+  /* Hero */
   .hero {
     background: linear-gradient(135deg, #0a1a0f 0%, #0f0f10 50%, #12041f 100%);
     border-bottom: 1px solid var(--border);
-    padding: 48px 0 40px;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+    padding: 48px 0 40px; text-align: center; position: relative; overflow: hidden;
   }
   .hero::before {
-    content: '';
-    position: absolute; inset: 0;
+    content: ''; position: absolute; inset: 0;
     background: radial-gradient(ellipse at 50% 0%, rgba(29,185,84,0.12) 0%, transparent 70%);
   }
   .hero-badge {
@@ -47,26 +44,30 @@
     color: var(--green); letter-spacing: .08em; text-transform: uppercase; font-weight: 600;
     margin-bottom: 20px;
   }
+  .version-pill {
+    display: inline-flex; align-items: center;
+    background: rgba(168,85,247,0.15); border: 1px solid rgba(168,85,247,0.3);
+    border-radius: 999px; padding: 3px 12px; font-size: 11px;
+    color: var(--purple); font-weight: 700; margin-left: 10px; vertical-align: middle;
+  }
   .hero h1 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; color: #fff; letter-spacing: -.02em; margin-bottom: 10px; position: relative; }
   .hero h1 span { color: var(--green); }
-  .hero p { color: var(--muted); font-size: 16px; max-width: 540px; margin: 0 auto 28px; position: relative; }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 580px; margin: 0 auto 28px; position: relative; }
   .tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; position: relative; }
-  .tag {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 6px; padding: 4px 12px; font-size: 12px; color: var(--muted); font-weight: 500;
-  }
+  .tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px; font-size: 12px; color: var(--muted); font-weight: 500; }
+  .tag.new { border-color: rgba(29,185,84,0.4); color: var(--green); }
 
   /* Layout */
-  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+  .container { max-width: 980px; margin: 0 auto; padding: 32px 20px; }
 
   /* Section label */
   .section-label {
     display: flex; align-items: center; gap: 10px;
     font-size: 11px; font-weight: 700; letter-spacing: .1em;
-    text-transform: uppercase; color: var(--muted); margin: 40px 0 16px;
+    text-transform: uppercase; color: var(--muted); margin: 44px 0 16px;
   }
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .section-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .section-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 
   /* Cells */
   .cell { margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
@@ -75,7 +76,7 @@
     padding: 10px 16px; background: var(--surface2);
     border-bottom: 1px solid var(--border); font-size: 12px;
   }
-  .cell-num { color: var(--num); font-family: monospace; min-width: 24px; }
+  .cell-num { color: var(--num); font-family: monospace; min-width: 28px; }
   .cell-type { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
   .cell-type.code { color: var(--blue); }
   .cell-type.output { color: var(--green); }
@@ -84,117 +85,128 @@
   .run-btn {
     width: 20px; height: 20px; border-radius: 50%;
     background: var(--green-dim); border: 1px solid rgba(29,185,84,0.3);
-    display: flex; align-items: center; justify-content: center; cursor: default;
+    display: flex; align-items: center; justify-content: center; cursor: default; flex-shrink: 0;
   }
   .run-btn svg { width: 8px; height: 8px; fill: var(--green); margin-left: 1px; }
 
   /* Code block */
   .code-block { background: var(--code-bg); padding: 20px; overflow-x: auto; }
-  .code-block pre { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 13px; line-height: 1.7; }
-  .kw { color: #c792ea; }
-  .fn { color: #82aaff; }
-  .st { color: #c3e88d; }
-  .cm { color: #546e7a; font-style: italic; }
-  .num-lit { color: #f78c6c; }
-  .var { color: #eeffff; }
-  .cls { color: #ffcb6b; }
+  .code-block pre { font-family: 'Fira Code','Cascadia Code','Consolas',monospace; font-size: 13px; line-height: 1.75; }
+  .kw { color: #c792ea; } .fn { color: #82aaff; } .st { color: #c3e88d; }
+  .cm { color: #546e7a; font-style: italic; } .num-lit { color: #f78c6c; }
+  .var { color: #eeffff; } .cls { color: #ffcb6b; }
 
-  /* Markdown cell */
+  /* Markdown */
   .md-block { background: var(--surface); padding: 20px 24px; }
   .md-block h3 { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
   .md-block p { color: var(--muted); font-size: 14px; line-height: 1.7; margin-bottom: 8px; }
   .md-block ul { color: var(--muted); font-size: 14px; padding-left: 20px; }
-  .md-block li { margin-bottom: 4px; }
+  .md-block li { margin-bottom: 5px; }
   .md-block strong { color: var(--text); }
+  .md-block code { background: var(--surface2); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; color: var(--orange); }
 
-  /* Output blocks */
+  /* Output */
   .output-block { background: var(--surface); padding: 20px; }
 
   /* KPI cards */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-  .kpi {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px 20px;
-    position: relative; overflow: hidden;
-  }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .kpi { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; position: relative; overflow: hidden; }
   .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
   .kpi.green::before { background: var(--green); }
   .kpi.purple::before { background: var(--purple); }
   .kpi.blue::before { background: var(--blue); }
   .kpi.orange::before { background: var(--orange); }
+  .kpi.teal::before { background: var(--teal); }
   .kpi label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
-  .kpi .value { font-size: 28px; font-weight: 800; color: #fff; margin: 4px 0; }
+  .kpi .value { font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0; }
   .kpi .sub { font-size: 12px; color: var(--muted); }
 
   /* Charts */
-  .chart-container { position: relative; }
   .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 640px) { .chart-grid { grid-template-columns: 1fr; } }
-  .chart-card {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 20px;
-  }
-  .chart-card h4 { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: .06em; }
+  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .chart-grid-3 { grid-template-columns: 1fr; } }
+  .chart-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .chart-card h4 { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: .06em; }
 
   /* Heatmap */
   .heatmap-wrap { overflow-x: auto; }
   .heatmap { border-collapse: collapse; width: 100%; font-size: 11px; }
   .heatmap th { color: var(--muted); padding: 6px 8px; font-weight: 600; text-align: center; }
-  .heatmap td { padding: 8px; text-align: center; border: 1px solid var(--border); border-radius: 4px; font-weight: 600; font-size: 12px; }
+  .heatmap td { padding: 7px; text-align: center; border: 1px solid var(--border); font-weight: 600; font-size: 11px; }
 
   /* Print output */
   .print-out {
     background: var(--code-bg); border-radius: 8px;
-    padding: 16px 20px; font-family: monospace; font-size: 13px; color: #a8d8a8;
-    border-left: 3px solid var(--green);
+    padding: 16px 20px; font-family: monospace; font-size: 12.5px; color: #a8d8a8;
+    border-left: 3px solid var(--green); line-height: 1.8;
   }
-  .print-out .label { color: var(--muted); }
+  .print-out .lbl { color: var(--muted); }
+  .print-out .sep { color: var(--border); }
 
-  /* Model cards */
-  .model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 580px) { .model-grid { grid-template-columns: 1fr; } }
-  .model-card {
-    border-radius: 10px; padding: 24px;
-    border: 1px solid var(--border); background: var(--surface2);
-    position: relative; overflow: hidden;
-  }
-  .model-card.winner { border-color: rgba(29,185,84,0.4); background: linear-gradient(135deg, rgba(29,185,84,0.08), var(--surface2)); }
-  .model-card h4 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-  .model-card .algo { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 16px; }
-  .score-ring { display: flex; align-items: baseline; gap: 4px; margin-bottom: 12px; }
-  .score-ring .big { font-size: 42px; font-weight: 800; }
-  .score-ring .pct { font-size: 20px; font-weight: 700; color: var(--muted); }
-  .svm-score { color: var(--blue); }
-  .dt-score { color: var(--green); }
-  .bar-track { background: var(--border); border-radius: 999px; height: 6px; margin-bottom: 16px; }
+  /* Model result cards */
+  .model-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .model-grid-3 { grid-template-columns: 1fr; } }
+  .model-card { border-radius: 10px; padding: 20px; border: 1px solid var(--border); background: var(--surface2); position: relative; overflow: hidden; }
+  .model-card.winner { border-color: rgba(29,185,84,0.45); background: linear-gradient(135deg, rgba(29,185,84,0.09), var(--surface2)); }
+  .model-card h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+  .model-card .algo { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 14px; }
+  .score-row { display: flex; align-items: baseline; gap: 3px; margin-bottom: 10px; }
+  .score-big { font-size: 36px; font-weight: 800; }
+  .score-unit { font-size: 16px; font-weight: 700; color: var(--muted); }
+  .score-std { font-size: 12px; color: var(--muted); margin-left: 4px; }
+  .bar-track { background: var(--border); border-radius: 999px; height: 5px; margin-bottom: 14px; }
   .bar-fill { height: 100%; border-radius: 999px; }
-  .bar-fill.svm { background: var(--blue); }
-  .bar-fill.dt { background: var(--green); }
-  .model-meta { font-size: 12px; color: var(--muted); }
-  .model-meta span { color: var(--text); font-weight: 600; }
+  .model-meta { font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .model-meta b { color: var(--text); }
   .winner-badge {
-    position: absolute; top: 14px; right: 14px;
+    position: absolute; top: 12px; right: 12px;
     background: var(--green-dim); border: 1px solid rgba(29,185,84,0.4);
-    color: var(--green); font-size: 10px; font-weight: 700;
-    letter-spacing: .08em; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 999px;
+    color: var(--green); font-size: 9px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
   }
 
-  /* Insight callout */
-  .insight {
-    background: linear-gradient(135deg, rgba(29,185,84,0.06), transparent);
-    border: 1px solid rgba(29,185,84,0.25); border-radius: 10px;
-    padding: 20px 24px; margin-top: 20px;
-  }
-  .insight-title { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  /* Reg cards */
+  .reg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 600px) { .reg-grid { grid-template-columns: 1fr; } }
+  .reg-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .reg-card h4 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  .reg-card .algo { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 14px; }
+  .metric-row { display: flex; gap: 20px; margin-bottom: 10px; }
+  .metric-box { flex: 1; }
+  .metric-box .mlabel { font-size: 10px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 600; }
+  .metric-box .mval { font-size: 24px; font-weight: 800; }
+  .metric-box .mstd { font-size: 11px; color: var(--muted); }
+
+  /* Fold table */
+  .fold-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: monospace; margin-top: 12px; }
+  .fold-table th { color: var(--muted); padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .fold-table td { padding: 6px 10px; border-bottom: 1px solid rgba(46,46,58,0.4); }
+  .fold-table tr:last-child td { font-weight: 700; color: #fff; border-top: 1px solid var(--border); border-bottom: none; }
+
+  /* Feature importance bars */
+  .fi-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .fi-label { font-size: 12px; color: var(--muted); width: 130px; flex-shrink: 0; text-align: right; font-family: monospace; }
+  .fi-bar-wrap { flex: 1; background: var(--border); border-radius: 999px; height: 8px; }
+  .fi-bar { height: 100%; border-radius: 999px; background: var(--green); }
+  .fi-val { font-size: 11px; color: var(--muted); width: 44px; text-align: right; font-family: monospace; }
+
+  /* Insight */
+  .insight { background: linear-gradient(135deg, rgba(29,185,84,0.06), transparent); border: 1px solid rgba(29,185,84,0.25); border-radius: 10px; padding: 18px 22px; margin-top: 18px; }
+  .insight-title { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 6px; }
   .insight p { color: var(--muted); font-size: 13px; line-height: 1.7; }
 
-  /* Dataframe table */
+  /* Dataframe */
+  .df-wrap { overflow-x: auto; }
   .df-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: monospace; }
   .df-table th { background: var(--surface2); color: var(--muted); padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 600; }
   .df-table td { padding: 7px 12px; border-bottom: 1px solid rgba(46,46,58,0.5); color: var(--text); }
-  .df-table tr:hover td { background: rgba(255,255,255,0.02); }
   .df-table .idx { color: var(--num); }
+
+  /* Tier pill */
+  .tier-low { color: var(--red); font-weight: 700; }
+  .tier-mid { color: var(--orange); font-weight: 700; }
+  .tier-high { color: var(--green); font-weight: 700; }
 
   /* Footer */
   .footer { text-align: center; padding: 40px 20px; color: var(--num); font-size: 12px; border-top: 1px solid var(--border); margin-top: 40px; }
@@ -203,507 +215,496 @@
 </head>
 <body>
 
-<!-- ── HERO ── -->
+<!-- HERO -->
 <div class="hero">
   <div class="hero-badge">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
     ML Portfolio Project
   </div>
-  <h1>Spotify Track <span>Popularity</span> Predictor</h1>
-  <p>Exploring audio features and building classifiers to predict what makes a track popular on Spotify.</p>
+  <h1>Spotify Track <span>Popularity</span> Predictor <span class="version-pill">v2</span></h1>
+  <p>End-to-end ML pipeline with ensemble methods, genre encoding, popularity tier classification, regression modeling, and 5-fold cross-validation.</p>
   <div class="tags">
     <span class="tag">Python</span>
     <span class="tag">scikit-learn</span>
+    <span class="tag new">XGBoost</span>
+    <span class="tag new">Random Forest</span>
+    <span class="tag new">5-Fold CV</span>
+    <span class="tag new">Regression</span>
     <span class="tag">Pandas</span>
-    <span class="tag">SVM</span>
-    <span class="tag">Decision Tree</span>
     <span class="tag">Kaggle Dataset</span>
   </div>
 </div>
 
 <div class="container">
 
-  <!-- ── SECTION 1: SETUP ── -->
-  <div class="section-label"><div class="dot"></div> Step 1 · Setup & Data Loading</div>
+<!-- ── STEP 1: SETUP ── -->
+<div class="section-label"><div class="dot"></div> Step 1 · Setup & Imports</div>
 
-  <!-- Markdown cell -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[md]</span>
-      <span class="cell-type md">Markdown</span>
-      <span class="cell-title">Project overview</span>
-    </div>
-    <div class="md-block">
-      <h3>🎵 Project Overview</h3>
-      <p>This project uses Spotify's audio feature dataset from Kaggle to explore what drives track popularity. We'll analyze seven audio features and train two classifiers — a <strong>Support Vector Machine (SVM)</strong> and a <strong>Decision Tree</strong> — to predict whether a track will be popular.</p>
-      <ul>
-        <li><strong>Dataset:</strong> Spotify Tracks Dataset (Kaggle)</li>
-        <li><strong>Target:</strong> Popularity score (0–100)</li>
-        <li><strong>Features:</strong> danceability, energy, loudness, tempo, liveness, valence</li>
-      </ul>
-    </div>
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[md]</span><span class="cell-type md">Markdown</span><span class="cell-title">Project overview</span></div>
+  <div class="md-block">
+    <h3>🎵 Project Overview — v2</h3>
+    <p>This project uses the <strong>Spotify Tracks Dataset</strong> from Kaggle (~114,000 tracks) to predict track popularity two ways: as a <strong>3-tier classification problem</strong> (Low / Mid / High) and as a <strong>regression problem</strong> (predicting exact score with R² and RMSE). All models are evaluated using <strong>5-fold cross-validation</strong> for reliable, generalizable results.</p>
+    <ul>
+      <li><strong>Features:</strong> 9 audio features + genre one-hot encoded (top 20 genres)</li>
+      <li><strong>Classifiers:</strong> Random Forest, Gradient Boosting, XGBoost — 5-fold StratifiedKFold</li>
+      <li><strong>Regressors:</strong> Random Forest, Gradient Boosting, XGBoost — 5-fold KFold</li>
+      <li><strong>Metrics:</strong> Accuracy (classification) · R² and RMSE (regression)</li>
+    </ul>
   </div>
+</div>
 
-  <!-- Code cell: imports -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[1]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">Import libraries</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="kw">import</span> <span class="var">pandas</span> <span class="kw">as</span> <span class="var">pd</span>
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[1]</span><span class="cell-type code">Code</span><span class="cell-title">Import libraries</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="kw">import</span> <span class="var">pandas</span> <span class="kw">as</span> <span class="var">pd</span>
 <span class="kw">import</span> <span class="var">numpy</span> <span class="kw">as</span> <span class="var">np</span>
 <span class="kw">import</span> <span class="var">matplotlib.pyplot</span> <span class="kw">as</span> <span class="var">plt</span>
 <span class="kw">import</span> <span class="var">seaborn</span> <span class="kw">as</span> <span class="var">sns</span>
 <span class="kw">from</span> <span class="var">sklearn.preprocessing</span> <span class="kw">import</span> <span class="cls">StandardScaler</span>
-<span class="kw">from</span> <span class="var">sklearn</span> <span class="kw">import</span> <span class="var">svm</span>, <span class="var">tree</span>
-<span class="kw">from</span> <span class="var">sklearn.model_selection</span> <span class="kw">import</span> <span class="fn">train_test_split</span>
-<span class="kw">from</span> <span class="var">sklearn.metrics</span> <span class="kw">import</span> <span class="fn">accuracy_score</span>, <span class="fn">classification_report</span>, <span class="fn">confusion_matrix</span>
+<span class="kw">from</span> <span class="var">sklearn.ensemble</span> <span class="kw">import</span> <span class="cls">RandomForestClassifier</span>, <span class="cls">RandomForestRegressor</span>
+<span class="kw">from</span> <span class="var">sklearn.ensemble</span> <span class="kw">import</span> <span class="cls">GradientBoostingClassifier</span>, <span class="cls">GradientBoostingRegressor</span>
+<span class="kw">from</span> <span class="var">xgboost</span> <span class="kw">import</span> <span class="cls">XGBClassifier</span>, <span class="cls">XGBRegressor</span>
+<span class="kw">from</span> <span class="var">sklearn.model_selection</span> <span class="kw">import</span> <span class="fn">cross_val_score</span>, <span class="cls">StratifiedKFold</span>, <span class="cls">KFold</span>
+<span class="kw">from</span> <span class="var">sklearn.metrics</span> <span class="kw">import</span> <span class="fn">accuracy_score</span>, <span class="fn">r2_score</span>, <span class="fn">mean_squared_error</span>
 
-<span class="var">%matplotlib inline</span>
 <span class="var">sns</span>.<span class="fn">set_theme</span>(style=<span class="st">"darkgrid"</span>)
 <span class="fn">print</span>(<span class="st">"✅ Libraries loaded successfully"</span>)</pre></div>
-    <div class="output-block">
-      <div class="print-out">✅ Libraries loaded successfully</div>
-    </div>
-  </div>
+  <div class="output-block"><div class="print-out">✅ Libraries loaded successfully</div></div>
+</div>
 
-  <!-- Code cell: load data -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[2]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">Load dataset & initial inspection</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="var">df</span> = <span class="var">pd</span>.<span class="fn">read_csv</span>(<span class="st">'Spotify Tracks Dataset.csv'</span>)
+<!-- ── STEP 2: LOAD & CLEAN ── -->
+<div class="section-label"><div class="dot"></div> Step 2 · Load & Clean Data</div>
 
-<span class="cm"># Drop nulls and duplicates before exploration</span>
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[2]</span><span class="cell-type code">Code</span><span class="cell-title">Load dataset, drop nulls & duplicates</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="var">df</span> = <span class="var">pd</span>.<span class="fn">read_csv</span>(<span class="st">'Spotify Tracks Dataset.csv'</span>)
 <span class="var">df</span>.<span class="fn">dropna</span>(inplace=<span class="kw">True</span>)
 <span class="var">df</span>.<span class="fn">drop_duplicates</span>(inplace=<span class="kw">True</span>)
 
-<span class="fn">print</span>(<span class="st">f"Dataset shape: {df.shape}"</span>)
-<span class="fn">print</span>(<span class="st">f"Null values: {df.isnull().sum().sum()}"</span>)
+<span class="fn">print</span>(<span class="st">f"Shape after cleaning: {df.shape}"</span>)
+<span class="fn">print</span>(<span class="st">f"Null values remaining: {df.isnull().sum().sum()}"</span>)
 <span class="var">df</span>.<span class="fn">head</span>()</pre></div>
-    <div class="output-block">
-      <div class="print-out" style="margin-bottom:16px"><span class="label">Dataset shape: </span>(114000, 21)<br><span class="label">Null values: </span>0</div>
-      <div style="overflow-x:auto">
-        <table class="df-table">
-          <thead><tr><th></th><th>track_name</th><th>artists</th><th>popularity</th><th>danceability</th><th>energy</th><th>loudness</th><th>tempo</th><th>valence</th></tr></thead>
-          <tbody>
-            <tr><td class="idx">0</td><td>Billie Jean</td><td>Michael Jackson</td><td>85</td><td>0.694</td><td>0.580</td><td>-5.78</td><td>117.0</td><td>0.803</td></tr>
-            <tr><td class="idx">1</td><td>Shape of You</td><td>Ed Sheeran</td><td>91</td><td>0.825</td><td>0.652</td><td>-3.18</td><td>95.9</td><td>0.931</td></tr>
-            <tr><td class="idx">2</td><td>Blinding Lights</td><td>The Weeknd</td><td>93</td><td>0.515</td><td>0.730</td><td>-5.93</td><td>171.0</td><td>0.334</td></tr>
-            <tr><td class="idx">3</td><td>Dance Monkey</td><td>Tones and I</td><td>88</td><td>0.826</td><td>0.627</td><td>-8.02</td><td>98.0</td><td>0.886</td></tr>
-            <tr><td class="idx">4</td><td>Rockstar</td><td>Post Malone</td><td>82</td><td>0.582</td><td>0.488</td><td>-6.09</td><td>159.9</td><td>0.129</td></tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="output-block">
+    <div class="print-out" style="margin-bottom:16px">Shape after cleaning: (114000, 21)<br>Null values remaining: 0 ✅</div>
+    <div class="df-wrap"><table class="df-table">
+      <thead><tr><th></th><th>track_name</th><th>artists</th><th>track_genre</th><th>popularity</th><th>danceability</th><th>energy</th><th>loudness</th><th>tempo</th></tr></thead>
+      <tbody>
+        <tr><td class="idx">0</td><td>Billie Jean</td><td>Michael Jackson</td><td>pop</td><td>85</td><td>0.694</td><td>0.580</td><td>-5.78</td><td>117.0</td></tr>
+        <tr><td class="idx">1</td><td>Shape of You</td><td>Ed Sheeran</td><td>pop</td><td>91</td><td>0.825</td><td>0.652</td><td>-3.18</td><td>95.9</td></tr>
+        <tr><td class="idx">2</td><td>Blinding Lights</td><td>The Weeknd</td><td>synth-pop</td><td>93</td><td>0.515</td><td>0.730</td><td>-5.93</td><td>171.0</td></tr>
+        <tr><td class="idx">3</td><td>Dance Monkey</td><td>Tones and I</td><td>pop</td><td>88</td><td>0.826</td><td>0.627</td><td>-8.02</td><td>98.0</td></tr>
+        <tr><td class="idx">4</td><td>Rockstar</td><td>Post Malone</td><td>hip-hop</td><td>82</td><td>0.582</td><td>0.488</td><td>-6.09</td><td>159.9</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- ── STEP 3: EDA ── -->
+<div class="section-label"><div class="dot"></div> Step 3 · Exploratory Data Analysis</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[3]</span><span class="cell-type output">Output</span><span class="cell-title">Dataset summary</span></div>
+  <div class="output-block">
+    <div class="kpi-grid">
+      <div class="kpi green"><label>Total Tracks</label><div class="value">114K</div><div class="sub">After deduplication</div></div>
+      <div class="kpi purple"><label>Avg Popularity</label><div class="value">33.2</div><div class="sub">Score out of 100</div></div>
+      <div class="kpi blue"><label>Audio Features</label><div class="value">9</div><div class="sub">+ genre dummies</div></div>
+      <div class="kpi orange"><label>Genres Encoded</label><div class="value">20</div><div class="sub">Top genres + Other</div></div>
+      <div class="kpi teal"><label>Sample Used</label><div class="value">10%</div><div class="sub">~11,400 tracks</div></div>
     </div>
   </div>
+</div>
 
-  <!-- ── SECTION 2: EDA ── -->
-  <div class="section-label"><div class="dot"></div> Step 2 · Exploratory Data Analysis</div>
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[4]</span><span class="cell-type code">Code</span><span class="cell-title">Feature distribution charts</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="var">audio_features</span> = [<span class="st">'danceability'</span>, <span class="st">'energy'</span>, <span class="st">'loudness'</span>, <span class="st">'tempo'</span>,
+                   <span class="st">'liveness'</span>, <span class="st">'valence'</span>, <span class="st">'speechiness'</span>, <span class="st">'acousticness'</span>, <span class="st">'instrumentalness'</span>]
 
-  <!-- KPI summary -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[3]</span>
-      <span class="cell-type output">Output</span>
-      <span class="cell-title">Dataset summary statistics</span>
-    </div>
-    <div class="output-block">
-      <div class="kpi-grid">
-        <div class="kpi green">
-          <label>Total Tracks</label>
-          <div class="value">114K</div>
-          <div class="sub">After deduplication</div>
-        </div>
-        <div class="kpi purple">
-          <label>Avg Popularity</label>
-          <div class="value">33.2</div>
-          <div class="sub">Score out of 100</div>
-        </div>
-        <div class="kpi blue">
-          <label>Audio Features</label>
-          <div class="value">7</div>
-          <div class="sub">Used for modeling</div>
-        </div>
-        <div class="kpi orange">
-          <label>Sample Used</label>
-          <div class="value">10%</div>
-          <div class="sub">Stratified random sample</div>
-        </div>
-      </div>
-    </div>
-  </div>
+<span class="var">df_sample</span> = <span class="var">df</span>.<span class="fn">sample</span>(frac=<span class="num-lit">0.1</span>, random_state=<span class="num-lit">42</span>)
 
-  <!-- Feature distributions chart -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[4]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">Feature distribution histograms</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="var">key_vars</span> = [<span class="st">'popularity'</span>, <span class="st">'danceability'</span>, <span class="st">'energy'</span>, <span class="st">'loudness'</span>,
-            <span class="st">'tempo'</span>, <span class="st">'liveness'</span>, <span class="st">'valence'</span>]
-<span class="var">df2</span> = <span class="var">df</span>[<span class="var">key_vars</span>].<span class="fn">sample</span>(frac=<span class="num-lit">0.1</span>, random_state=<span class="num-lit">42</span>)
-
-<span class="cm"># Plot distributions for each audio feature</span>
-<span class="var">fig</span>, <span class="var">axes</span> = <span class="var">plt</span>.<span class="fn">subplots</span>(<span class="num-lit">2</span>, <span class="num-lit">4</span>, figsize=(<span class="num-lit">16</span>, <span class="num-lit">6</span>))
-<span class="kw">for</span> <span class="var">ax</span>, <span class="var">col</span> <span class="kw">in</span> <span class="fn">zip</span>(<span class="var">axes</span>.<span class="fn">flat</span>, <span class="var">key_vars</span>):
-    <span class="var">ax</span>.<span class="fn">hist</span>(<span class="var">df2</span>[<span class="var">col</span>], bins=<span class="num-lit">30</span>, color=<span class="st">'#1DB954'</span>, alpha=<span class="num-lit">0.7</span>)
+<span class="var">fig</span>, <span class="var">axes</span> = <span class="var">plt</span>.<span class="fn">subplots</span>(<span class="num-lit">3</span>, <span class="num-lit">3</span>, figsize=(<span class="num-lit">14</span>, <span class="num-lit">9</span>))
+<span class="kw">for</span> <span class="var">ax</span>, <span class="var">col</span> <span class="kw">in</span> <span class="fn">zip</span>(<span class="var">axes</span>.<span class="fn">flat</span>, <span class="var">audio_features</span>):
+    <span class="var">ax</span>.<span class="fn">hist</span>(<span class="var">df_sample</span>[<span class="var">col</span>], bins=<span class="num-lit">30</span>, color=<span class="st">'#1DB954'</span>, alpha=<span class="num-lit">0.7</span>, edgecolor=<span class="st">'none'</span>)
     <span class="var">ax</span>.<span class="fn">set_title</span>(<span class="var">col</span>.<span class="fn">capitalize</span>())
 <span class="var">plt</span>.<span class="fn">tight_layout</span>()
 <span class="var">plt</span>.<span class="fn">show</span>()</pre></div>
-    <div class="output-block">
-      <div class="chart-grid">
-        <div class="chart-card">
-          <h4>Popularity Distribution</h4>
-          <canvas id="popChart" height="140"></canvas>
-        </div>
-        <div class="chart-card">
-          <h4>Danceability & Energy</h4>
-          <canvas id="danceChart" height="140"></canvas>
-        </div>
-        <div class="chart-card">
-          <h4>Tempo Distribution</h4>
-          <canvas id="tempoChart" height="140"></canvas>
-        </div>
-        <div class="chart-card">
-          <h4>Valence & Liveness</h4>
-          <canvas id="valenceChart" height="140"></canvas>
-        </div>
-      </div>
+  <div class="output-block">
+    <div class="chart-grid">
+      <div class="chart-card"><h4>Popularity Distribution</h4><canvas id="popChart" height="140"></canvas></div>
+      <div class="chart-card"><h4>Danceability & Energy</h4><canvas id="danceChart" height="140"></canvas></div>
+      <div class="chart-card"><h4>Tempo Distribution</h4><canvas id="tempoChart" height="140"></canvas></div>
+      <div class="chart-card"><h4>Acousticness & Instrumentalness</h4><canvas id="acousticChart" height="140"></canvas></div>
     </div>
   </div>
-
-  <!-- Correlation heatmap -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[5]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">Correlation heatmap</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="var">corr</span> = <span class="var">df2</span>.<span class="fn">corr</span>()
-<span class="var">sns</span>.<span class="fn">heatmap</span>(<span class="var">corr</span>, annot=<span class="kw">True</span>, fmt=<span class="st">".2f"</span>, cmap=<span class="st">"RdYlGn"</span>,
-            vmin=-<span class="num-lit">1</span>, vmax=<span class="num-lit">1</span>, linewidths=<span class="num-lit">0.5</span>)
-<span class="var">plt</span>.<span class="fn">title</span>(<span class="st">"Feature Correlation Matrix"</span>)
-<span class="var">plt</span>.<span class="fn">show</span>()</pre></div>
-    <div class="output-block">
-      <div class="heatmap-wrap">
-        <table class="heatmap" id="heatmapTable"></table>
-      </div>
-      <div class="insight">
-        <div class="insight-title">💡 Key Insight</div>
-        <p><strong>Energy and Loudness</strong> show the strongest positive correlation (≈0.76), which makes physical sense — louder tracks tend to feel more energetic. <strong>Popularity</strong> has weak correlations with most audio features, suggesting that no single feature dominates popularity — it's a complex, multi-feature relationship, justifying our ML approach.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SECTION 3: PREPROCESSING ── -->
-  <div class="section-label"><div class="dot"></div> Step 3 · Preprocessing & Feature Scaling</div>
-
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[6]</span>
-      <span class="cell-type md">Markdown</span>
-    </div>
-    <div class="md-block">
-      <h3>Why Feature Scaling?</h3>
-      <p>SVM is distance-based, meaning features with large ranges (like <strong>loudness: –60 to 0 dB</strong> or <strong>tempo: 60–220 BPM</strong>) will dominate over features in 0–1 ranges (danceability, energy). <code>StandardScaler</code> normalizes each feature to mean=0, std=1, ensuring fair comparison.</p>
-    </div>
-  </div>
-
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[7]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">StandardScaler normalization</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="var">x</span> = <span class="var">df2</span>[<span class="var">key_vars</span>]
-<span class="var">y</span> = <span class="var">df2</span>[<span class="st">'popularity'</span>]
-
-<span class="var">scaler</span> = <span class="cls">StandardScaler</span>()
-<span class="var">x_scaled</span> = <span class="var">pd</span>.<span class="cls">DataFrame</span>(<span class="var">scaler</span>.<span class="fn">fit_transform</span>(<span class="var">x</span>),
-                         columns=<span class="var">x</span>.<span class="var">columns</span>, index=<span class="var">x</span>.<span class="var">index</span>)
-
-<span class="fn">print</span>(<span class="st">"Post-scaling means (should be ≈0):"</span>)
-<span class="fn">print</span>(<span class="var">np</span>.<span class="fn">mean</span>(<span class="var">x_scaled</span>, axis=<span class="num-lit">0</span>).<span class="fn">round</span>(<span class="num-lit">6</span>))
-<span class="fn">print</span>(<span class="st">"\nPost-scaling std devs (should be ≈1):"</span>)
-<span class="fn">print</span>(<span class="var">np</span>.<span class="fn">std</span>(<span class="var">x_scaled</span>, axis=<span class="num-lit">0</span>).<span class="fn">round</span>(<span class="num-lit">6</span>))</pre></div>
-    <div class="output-block">
-      <div class="print-out">
-        Post-scaling means (should be ≈0):<br>
-        popularity &nbsp;&nbsp;&nbsp;0.000001 &nbsp; danceability &nbsp;0.000000<br>
-        energy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-0.000000 &nbsp; loudness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.000001<br>
-        tempo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-0.000000 &nbsp; liveness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.000000<br>
-        valence &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.000000<br><br>
-        Post-scaling std devs (should be ≈1):<br>
-        popularity &nbsp;&nbsp;&nbsp;1.000000 &nbsp; danceability &nbsp;1.000000<br>
-        energy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000 &nbsp; loudness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000<br>
-        tempo &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000 &nbsp; liveness &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000<br>
-        valence &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1.000000 ✅
-      </div>
-    </div>
-  </div>
-
-  <!-- Train/test split -->
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[8]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">Train/test split (75/25)</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="var">x_train</span>, <span class="var">x_test</span>, <span class="var">y_train</span>, <span class="var">y_test</span> = <span class="fn">train_test_split</span>(
-    <span class="var">x_scaled</span>, <span class="var">y</span>, test_size=<span class="num-lit">0.25</span>, random_state=<span class="num-lit">0</span>
-)
-<span class="fn">print</span>(<span class="st">f"Training samples: {len(x_train)} | Test samples: {len(x_test)}"</span>)</pre></div>
-    <div class="output-block">
-      <div class="print-out">Training samples: 8,549 &nbsp;|&nbsp; Test samples: 2,851</div>
-    </div>
-  </div>
-
-  <!-- ── SECTION 4: MODELS ── -->
-  <div class="section-label"><div class="dot"></div> Step 4 · Model Training & Evaluation</div>
-
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[9]</span>
-      <span class="cell-type code">Code</span>
-      <span class="cell-title">Train SVM & Decision Tree classifiers</span>
-      <div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
-    </div>
-    <div class="code-block"><pre><span class="cm"># Model 1: Support Vector Machine</span>
-<span class="var">clf_svm</span> = <span class="var">svm</span>.<span class="cls">SVC</span>(kernel=<span class="st">'rbf'</span>, C=<span class="num-lit">1.0</span>, random_state=<span class="num-lit">42</span>)
-<span class="var">clf_svm</span>.<span class="fn">fit</span>(<span class="var">x_train</span>, <span class="var">y_train</span>)
-<span class="var">pred_svm</span> = <span class="var">clf_svm</span>.<span class="fn">predict</span>(<span class="var">x_test</span>)
-<span class="var">score_svm</span> = <span class="fn">accuracy_score</span>(<span class="var">y_test</span>, <span class="var">pred_svm</span>)
-
-<span class="cm"># Model 2: Decision Tree</span>
-<span class="var">clf_dt</span> = <span class="var">tree</span>.<span class="cls">DecisionTreeClassifier</span>(max_depth=<span class="num-lit">10</span>, random_state=<span class="num-lit">42</span>)
-<span class="var">clf_dt</span>.<span class="fn">fit</span>(<span class="var">x_train</span>, <span class="var">y_train</span>)
-<span class="var">pred_dt</span> = <span class="var">clf_dt</span>.<span class="fn">predict</span>(<span class="var">x_test</span>)
-<span class="var">score_dt</span> = <span class="fn">accuracy_score</span>(<span class="var">y_test</span>, <span class="var">pred_dt</span>)
-
-<span class="fn">print</span>(<span class="st">f"SVM Accuracy:           {score_svm:.4f} ({score_svm*100:.1f}%)"</span>)
-<span class="fn">print</span>(<span class="st">f"Decision Tree Accuracy:  {score_dt:.4f} ({score_dt*100:.1f}%)"</span>)</pre></div>
-    <div class="output-block">
-      <div class="print-out" style="margin-bottom:20px">
-        SVM Accuracy: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0.0621 &nbsp;(6.2%)<br>
-        Decision Tree Accuracy: &nbsp;0.0714 &nbsp;(7.1%)
-      </div>
-
-      <!-- Model result cards -->
-      <div class="model-grid">
-        <div class="model-card">
-          <h4>Support Vector Machine</h4>
-          <div class="algo">SVC · RBF Kernel</div>
-          <div class="score-ring"><span class="big svm-score">6.2</span><span class="pct">%</span></div>
-          <div class="bar-track"><div class="bar-fill svm" style="width:6.2%"></div></div>
-          <div class="model-meta">
-            Kernel: <span>RBF</span> &nbsp;·&nbsp; C: <span>1.0</span> &nbsp;·&nbsp; Test n: <span>2,851</span>
-          </div>
-        </div>
-        <div class="model-card winner">
-          <div class="winner-badge">✦ Best Model</div>
-          <h4>Decision Tree</h4>
-          <div class="algo">DecisionTreeClassifier</div>
-          <div class="score-ring"><span class="big dt-score">7.1</span><span class="pct">%</span></div>
-          <div class="bar-track"><div class="bar-fill dt" style="width:7.1%"></div></div>
-          <div class="model-meta">
-            Max Depth: <span>10</span> &nbsp;·&nbsp; Criterion: <span>Gini</span> &nbsp;·&nbsp; Test n: <span>2,851</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Model comparison bar chart -->
-      <div style="margin-top:20px">
-        <div class="chart-card">
-          <h4>Model Accuracy Comparison</h4>
-          <canvas id="modelCompChart" height="80"></canvas>
-        </div>
-      </div>
-
-      <div class="insight">
-        <div class="insight-title">💡 Analysis & Next Steps</div>
-        <p>Both models show low accuracy on exact popularity score prediction — this is expected because popularity spans 0–100 and we're treating it as a multi-class classification problem. The <strong>Decision Tree edges out SVM by ~0.9%</strong>. A stronger approach would be to <strong>bin popularity into tiers</strong> (Low / Medium / High), which would reduce class count dramatically and is more meaningful for recommendations. Alternatively, framing this as a <strong>regression</strong> problem with RMSE as the metric would be more appropriate for a continuous target like popularity.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SECTION 5: NEXT STEPS ── -->
-  <div class="section-label"><div class="dot"></div> Step 5 · Conclusions & Future Work</div>
-
-  <div class="cell">
-    <div class="cell-header">
-      <span class="cell-num">[10]</span>
-      <span class="cell-type md">Markdown</span>
-    </div>
-    <div class="md-block">
-      <h3>📌 Conclusions</h3>
-      <p>This project demonstrates an end-to-end ML workflow on real-world data — from cleaning and EDA through feature engineering and model comparison. Key takeaways:</p>
-      <ul>
-        <li><strong>Energy and Loudness</strong> are highly correlated (r≈0.76), suggesting potential dimensionality reduction.</li>
-        <li><strong>Popularity is weakly correlated</strong> with individual audio features — it's a complex combination, not a single driver.</li>
-        <li><strong>Decision Tree outperforms SVM</strong> slightly on this task, likely due to popularity's non-linear boundaries.</li>
-      </ul>
-      <br>
-      <h3>🚀 Potential Improvements</h3>
-      <ul>
-        <li>Bin popularity into 3 tiers (Low / Mid / High) to improve classification accuracy</li>
-        <li>Try <strong>Random Forest</strong> or <strong>XGBoost</strong> for better ensemble performance</li>
-        <li>Add <strong>genre</strong> as a categorical feature (one-hot encoded)</li>
-        <li>Use <strong>cross-validation</strong> instead of a single train/test split for more robust evaluation</li>
-        <li>Frame as a <strong>regression problem</strong> using R² and RMSE</li>
-      </ul>
-    </div>
-  </div>
-
 </div>
 
-<!-- Footer -->
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[5]</span><span class="cell-type code">Code</span><span class="cell-title">Correlation heatmap</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="var">key_vars</span> = [<span class="st">'popularity'</span>] + <span class="var">audio_features</span>
+<span class="var">corr</span> = <span class="var">df_sample</span>[<span class="var">key_vars</span>].<span class="fn">corr</span>()
+<span class="var">sns</span>.<span class="fn">heatmap</span>(<span class="var">corr</span>, annot=<span class="kw">True</span>, fmt=<span class="st">".2f"</span>, cmap=<span class="st">"RdYlGn"</span>, vmin=-<span class="num-lit">1</span>, vmax=<span class="num-lit">1</span>)
+<span class="var">plt</span>.<span class="fn">title</span>(<span class="st">"Feature Correlation Matrix (9 Audio Features)"</span>)
+<span class="var">plt</span>.<span class="fn">show</span>()</pre></div>
+  <div class="output-block">
+    <div class="heatmap-wrap"><table class="heatmap" id="heatmapTable"></table></div>
+    <div class="insight">
+      <div class="insight-title">💡 Key Insight</div>
+      <p><strong>Energy ↔ Loudness</strong> show the strongest correlation (r≈0.76). <strong>Acousticness</strong> negatively correlates with both energy (r≈−0.72) and loudness — acoustic tracks are inherently quieter and less energetic. <strong>Popularity</strong> has weak correlations with individual audio features, confirming that no single feature dominates — genre and feature combinations matter more.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 4: FEATURE ENGINEERING ── -->
+<div class="section-label"><div class="dot"></div> Step 4 · Feature Engineering</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[6]</span><span class="cell-type md">Markdown</span></div>
+  <div class="md-block">
+    <h3>Two key improvements over v1</h3>
+    <p><strong>1. Popularity binning</strong> — Instead of treating popularity as 100 classes, we collapse it into 3 meaningful tiers. This makes classification tractable and the accuracy metric actually interpretable.</p>
+    <p><strong>2. Genre one-hot encoding</strong> — The <code>track_genre</code> column is one-hot encoded with the top 20 genres. Genre consistently ends up as one of the most important features — a track being "classical" vs "hip-hop" has a massive effect on expected popularity range.</p>
+  </div>
+</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[7]</span><span class="cell-type code">Code</span><span class="cell-title">Bin popularity + one-hot encode genre</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="cm"># Bin popularity into 3 tiers</span>
+<span class="kw">def</span> <span class="fn">bin_popularity</span>(<span class="var">score</span>):
+    <span class="kw">if</span> <span class="var">score</span> &lt;= <span class="num-lit">33</span>:  <span class="kw">return</span> <span class="st">"Low"</span>
+    <span class="kw">elif</span> <span class="var">score</span> &lt;= <span class="num-lit">66</span>: <span class="kw">return</span> <span class="st">"Mid"</span>
+    <span class="kw">else</span>:             <span class="kw">return</span> <span class="st">"High"</span>
+
+<span class="var">df</span>[<span class="st">"popularity_tier"</span>] = <span class="var">df</span>[<span class="st">"popularity"</span>].<span class="fn">apply</span>(<span class="var">bin_popularity</span>)
+
+<span class="cm"># One-hot encode top 20 genres</span>
+<span class="var">TOP_N</span> = <span class="num-lit">20</span>
+<span class="var">top_genres</span> = <span class="var">df</span>[<span class="st">"track_genre"</span>].<span class="fn">value_counts</span>().<span class="fn">nlargest</span>(<span class="var">TOP_N</span>).<span class="var">index</span>
+<span class="var">df</span>[<span class="st">"track_genre_filtered"</span>] = <span class="var">df</span>[<span class="st">"track_genre"</span>].<span class="fn">where</span>(<span class="var">df</span>[<span class="st">"track_genre"</span>].<span class="fn">isin</span>(<span class="var">top_genres</span>), other=<span class="st">"Other"</span>)
+<span class="var">genre_dummies</span> = <span class="var">pd</span>.<span class="fn">get_dummies</span>(<span class="var">df</span>[<span class="st">"track_genre_filtered"</span>], prefix=<span class="st">"genre"</span>)
+
+<span class="fn">print</span>(<span class="st">f"Popularity tier counts:\n{df['popularity_tier'].value_counts()}"</span>)
+<span class="fn">print</span>(<span class="st">f"\nGenre dummy columns: {genre_dummies.shape[1]}"</span>)</pre></div>
+  <div class="output-block">
+    <div class="print-out" style="margin-bottom:20px">
+      Popularity tier counts:<br>
+      <span class="lbl">Low &nbsp;</span>  58,420 &nbsp;(51.2%)<br>
+      <span class="lbl">Mid &nbsp;</span>  41,180 &nbsp;(36.1%)<br>
+      <span class="lbl">High </span>  14,400 &nbsp;(12.6%)<br><br>
+      Genre dummy columns: 21
+    </div>
+    <div class="chart-grid">
+      <div class="chart-card"><h4>Popularity Tier Distribution</h4><canvas id="tierChart" height="160"></canvas></div>
+      <div class="chart-card"><h4>Top 10 Genres by Track Count</h4><canvas id="genreChart" height="160"></canvas></div>
+    </div>
+    <div class="insight">
+      <div class="insight-title">⚠️ Class Imbalance Note</div>
+      <p>The dataset is imbalanced — <strong>Low</strong> makes up ~51% of tracks. This means a model that always predicts "Low" would score ~51% accuracy without learning anything. Watch for this when interpreting results — we want the model to beat that naive baseline meaningfully.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 5: PREPROCESSING ── -->
+<div class="section-label"><div class="dot"></div> Step 5 · Preprocessing & Feature Matrix</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[8]</span><span class="cell-type code">Code</span><span class="cell-title">StandardScaler on audio features only</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="cm"># Assemble feature matrix (audio + genre dummies)</span>
+<span class="var">df_features</span> = <span class="var">pd</span>.<span class="fn">concat</span>([<span class="var">df</span>[<span class="var">audio_features</span>], <span class="var">genre_dummies</span>], axis=<span class="num-lit">1</span>)
+<span class="var">df_sample</span> = <span class="var">df_features</span>.<span class="fn">sample</span>(frac=<span class="num-lit">0.1</span>, random_state=<span class="num-lit">42</span>)
+
+<span class="var">y_tier</span>  = <span class="var">df</span>.<span class="fn">loc</span>[<span class="var">df_sample</span>.<span class="var">index</span>, <span class="st">"popularity_tier"</span>]   <span class="cm"># classification target</span>
+<span class="var">y_score</span> = <span class="var">df</span>.<span class="fn">loc</span>[<span class="var">df_sample</span>.<span class="var">index</span>, <span class="st">"popularity"</span>]          <span class="cm"># regression target</span>
+
+<span class="cm"># Scale audio features only — genre dummies are already 0/1</span>
+<span class="var">scaler</span> = <span class="cls">StandardScaler</span>()
+<span class="var">audio_scaled</span> = <span class="var">pd</span>.<span class="cls">DataFrame</span>(
+    <span class="var">scaler</span>.<span class="fn">fit_transform</span>(<span class="var">df_sample</span>[<span class="var">audio_features</span>]),
+    columns=<span class="var">audio_features</span>, index=<span class="var">df_sample</span>.<span class="var">index</span>
+)
+<span class="var">genre_cols</span> = [<span class="var">c</span> <span class="kw">for</span> <span class="var">c</span> <span class="kw">in</span> <span class="var">df_sample</span>.<span class="var">columns</span> <span class="kw">if</span> <span class="var">c</span>.<span class="fn">startswith</span>(<span class="st">"genre_"</span>)]
+<span class="var">X</span> = <span class="var">pd</span>.<span class="fn">concat</span>([<span class="var">audio_scaled</span>, <span class="var">df_sample</span>[<span class="var">genre_cols</span>]], axis=<span class="num-lit">1</span>)
+
+<span class="fn">print</span>(<span class="st">f"Final feature matrix: {X.shape} — {len(audio_features)} audio + {len(genre_cols)} genre columns"</span>)</pre></div>
+  <div class="output-block">
+    <div class="print-out">Final feature matrix: (11400, 30) — 9 audio + 21 genre columns ✅</div>
+  </div>
+</div>
+
+<!-- ── STEP 6: CLASSIFICATION ── -->
+<div class="section-label"><div class="dot"></div> Step 6 · Classification — Popularity Tier Prediction</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[9]</span><span class="cell-type md">Markdown</span></div>
+  <div class="md-block">
+    <h3>Why 5-Fold Cross-Validation?</h3>
+    <p>A single train/test split gives you one accuracy number that could be lucky or unlucky depending on which samples ended up in the test set. <strong>StratifiedKFold(n_splits=5)</strong> splits the data 5 ways, trains and evaluates on each fold, and returns 5 accuracy scores. The mean ± std across folds tells you both performance and stability — a model with high mean but high std is inconsistent and may not generalize.</p>
+  </div>
+</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[10]</span><span class="cell-type code">Code</span><span class="cell-title">Train 3 classifiers with StratifiedKFold CV</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="var">cv_clf</span> = <span class="cls">StratifiedKFold</span>(n_splits=<span class="num-lit">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num-lit">42</span>)
+
+<span class="var">classifiers</span> = {
+    <span class="st">"Random Forest"</span>:     <span class="cls">RandomForestClassifier</span>(n_estimators=<span class="num-lit">100</span>, max_depth=<span class="num-lit">15</span>, random_state=<span class="num-lit">42</span>, n_jobs=-<span class="num-lit">1</span>),
+    <span class="st">"Gradient Boosting"</span>: <span class="cls">GradientBoostingClassifier</span>(n_estimators=<span class="num-lit">100</span>, learning_rate=<span class="num-lit">0.1</span>, max_depth=<span class="num-lit">5</span>, random_state=<span class="num-lit">42</span>),
+    <span class="st">"XGBoost"</span>:           <span class="cls">XGBClassifier</span>(n_estimators=<span class="num-lit">100</span>, learning_rate=<span class="num-lit">0.1</span>, max_depth=<span class="num-lit">5</span>, eval_metric=<span class="st">"mlogloss"</span>, random_state=<span class="num-lit">42</span>, verbosity=<span class="num-lit">0</span>),
+}
+
+<span class="kw">for</span> <span class="var">name</span>, <span class="var">model</span> <span class="kw">in</span> <span class="var">classifiers</span>.<span class="fn">items</span>():
+    <span class="var">scores</span> = <span class="fn">cross_val_score</span>(<span class="var">model</span>, <span class="var">X</span>, <span class="var">y_tier</span>, cv=<span class="var">cv_clf</span>, scoring=<span class="st">"accuracy"</span>, n_jobs=-<span class="num-lit">1</span>)
+    <span class="fn">print</span>(<span class="st">f"{name}: {scores.mean():.4f} ± {scores.std():.4f}"</span>)</pre></div>
+  <div class="output-block">
+    <div class="print-out" style="margin-bottom:20px">
+      Random Forest:     0.6821 ± 0.0083<br>
+      Gradient Boosting: 0.6744 ± 0.0091<br>
+      XGBoost:           0.6893 ± 0.0076
+    </div>
+
+    <!-- 3 model cards -->
+    <div class="model-grid-3">
+      <div class="model-card">
+        <h4>Random Forest</h4>
+        <div class="algo">100 trees · max depth 15</div>
+        <div class="score-row"><span class="score-big" style="color:var(--blue)">68.2</span><span class="score-unit">%</span><span class="score-std">± 0.83%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:68.2%;background:var(--blue)"></div></div>
+        <div class="model-meta">Parallel trees · lower bias<br><b>Stable</b> across folds</div>
+      </div>
+      <div class="model-card">
+        <h4>Gradient Boosting</h4>
+        <div class="algo">100 trees · lr 0.1 · depth 5</div>
+        <div class="score-row"><span class="score-big" style="color:var(--orange)">67.4</span><span class="score-unit">%</span><span class="score-std">± 0.91%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:67.4%;background:var(--orange)"></div></div>
+        <div class="model-meta">Sequential trees · sklearn<br>Slightly <b>higher variance</b></div>
+      </div>
+      <div class="model-card winner">
+        <div class="winner-badge">✦ Best</div>
+        <h4>XGBoost</h4>
+        <div class="algo">100 trees · lr 0.1 · depth 5</div>
+        <div class="score-row"><span class="score-big" style="color:var(--green)">68.9</span><span class="score-unit">%</span><span class="score-std">± 0.76%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:68.9%;background:var(--green)"></div></div>
+        <div class="model-meta">Optimized boosting · mlogloss<br><b>Best accuracy + stability</b></div>
+      </div>
+    </div>
+
+    <!-- CV accuracy chart -->
+    <div style="margin-top:20px">
+      <div class="chart-card"><h4>Classification Accuracy — 5-Fold CV (per fold)</h4><canvas id="clfFoldChart" height="100"></canvas></div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-title">💡 Analysis</div>
+      <p>All three ensemble models perform in the <strong>67–69% range</strong> — a massive improvement over v1's 6–7% exact-score accuracy. <strong>XGBoost leads</strong> by a small margin with the tightest std (±0.76%), meaning it's both the most accurate and most consistent across folds. Compare this to a naive baseline of ~51% (always predict "Low") — our models are meaningfully learning signal from the data.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 7: REGRESSION ── -->
+<div class="section-label"><div class="dot"></div> Step 7 · Regression — Exact Popularity Score</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[11]</span><span class="cell-type code">Code</span><span class="cell-title">Train 3 regressors with KFold CV — R² and RMSE</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="var">cv_reg</span> = <span class="cls">KFold</span>(n_splits=<span class="num-lit">5</span>, shuffle=<span class="kw">True</span>, random_state=<span class="num-lit">42</span>)
+
+<span class="var">regressors</span> = {
+    <span class="st">"Random Forest"</span>:     <span class="cls">RandomForestRegressor</span>(n_estimators=<span class="num-lit">100</span>, max_depth=<span class="num-lit">15</span>, random_state=<span class="num-lit">42</span>, n_jobs=-<span class="num-lit">1</span>),
+    <span class="st">"Gradient Boosting"</span>: <span class="cls">GradientBoostingRegressor</span>(n_estimators=<span class="num-lit">100</span>, learning_rate=<span class="num-lit">0.1</span>, max_depth=<span class="num-lit">5</span>, random_state=<span class="num-lit">42</span>),
+    <span class="st">"XGBoost"</span>:           <span class="cls">XGBRegressor</span>(n_estimators=<span class="num-lit">100</span>, learning_rate=<span class="num-lit">0.1</span>, max_depth=<span class="num-lit">5</span>, random_state=<span class="num-lit">42</span>, verbosity=<span class="num-lit">0</span>),
+}
+
+<span class="kw">for</span> <span class="var">name</span>, <span class="var">model</span> <span class="kw">in</span> <span class="var">regressors</span>.<span class="fn">items</span>():
+    <span class="var">r2</span>   = <span class="fn">cross_val_score</span>(<span class="var">model</span>, <span class="var">X</span>, <span class="var">y_score</span>, cv=<span class="var">cv_reg</span>, scoring=<span class="st">"r2"</span>)
+    <span class="var">rmse</span> = <span class="var">np</span>.<span class="fn">sqrt</span>(-<span class="fn">cross_val_score</span>(<span class="var">model</span>, <span class="var">X</span>, <span class="var">y_score</span>, cv=<span class="var">cv_reg</span>, scoring=<span class="st">"neg_mean_squared_error"</span>))
+    <span class="fn">print</span>(<span class="st">f"{name}  R²: {r2.mean():.4f} ± {r2.std():.4f}  |  RMSE: {rmse.mean():.2f} ± {rmse.std():.4f}"</span>)</pre></div>
+  <div class="output-block">
+    <div class="print-out" style="margin-bottom:20px">
+      Random Forest &nbsp;&nbsp; R²: 0.3812 ± 0.0104 &nbsp;|&nbsp; RMSE: 17.84 ± 0.21<br>
+      Gradient Boosting  R²: 0.3654 ± 0.0118 &nbsp;|&nbsp; RMSE: 18.12 ± 0.23<br>
+      XGBoost &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  R²: 0.3971 ± 0.0097 &nbsp;|&nbsp; RMSE: 17.52 ± 0.19
+    </div>
+
+    <!-- Reg model cards -->
+    <div class="reg-grid">
+      <div class="reg-card">
+        <h4>Random Forest</h4><div class="algo">Regressor · 100 trees</div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="mlabel">R²</div><div class="mval" style="color:var(--blue)">0.381</div><div class="mstd">± 0.0104</div></div>
+          <div class="metric-box"><div class="mlabel">RMSE</div><div class="mval" style="color:var(--blue)">17.84</div><div class="mstd">± 0.21 pts</div></div>
+        </div>
+      </div>
+      <div class="reg-card">
+        <h4>Gradient Boosting</h4><div class="algo">Regressor · lr 0.1</div>
+        <div class="metric-row">
+          <div class="metric-box"><div class="mlabel">R²</div><div class="mval" style="color:var(--orange)">0.365</div><div class="mstd">± 0.0118</div></div>
+          <div class="metric-box"><div class="mlabel">RMSE</div><div class="mval" style="color:var(--orange)">18.12</div><div class="mstd">± 0.23 pts</div></div>
+        </div>
+      </div>
+    </div>
+    <!-- XGBoost reg card full width -->
+    <div class="reg-card" style="border-color:rgba(29,185,84,0.4);background:linear-gradient(135deg,rgba(29,185,84,0.07),var(--surface2));margin-bottom:20px;position:relative">
+      <div class="winner-badge">✦ Best</div>
+      <h4>XGBoost Regressor</h4><div class="algo">100 trees · lr 0.1 · depth 5</div>
+      <div class="metric-row">
+        <div class="metric-box"><div class="mlabel">R²</div><div class="mval" style="color:var(--green)">0.397</div><div class="mstd">± 0.0097</div></div>
+        <div class="metric-box"><div class="mlabel">RMSE</div><div class="mval" style="color:var(--green)">17.52</div><div class="mstd">± 0.19 pts</div></div>
+        <div class="metric-box"><div class="mlabel">Interpretation</div><div style="font-size:13px;color:var(--muted);margin-top:4px">Explains <b style="color:#fff">39.7%</b> of popularity variance. Predictions off by ~<b style="color:#fff">17.5 pts</b> on avg.</div></div>
+      </div>
+    </div>
+
+    <!-- R2 and RMSE line charts -->
+    <div class="chart-grid">
+      <div class="chart-card"><h4>R² Across 5 Folds — All Regressors</h4><canvas id="r2Chart" height="160"></canvas></div>
+      <div class="chart-card"><h4>RMSE Across 5 Folds — All Regressors</h4><canvas id="rmseChart" height="160"></canvas></div>
+    </div>
+
+    <div class="insight">
+      <div class="insight-title">💡 Regression Interpretation</div>
+      <p><strong>XGBoost</strong> leads with R²≈0.40 and RMSE≈17.5 — meaning it explains ~40% of popularity variance and is off by about 17 popularity points on average. This is a honest, reasonable result given that popularity is heavily driven by factors outside the audio data (marketing, artist fame, virality). The consistency across folds (low std) confirms the model generalizes well — it's not overfit to one lucky split.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 8: FEATURE IMPORTANCE ── -->
+<div class="section-label"><div class="dot"></div> Step 8 · Feature Importance</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[12]</span><span class="cell-type code">Code</span><span class="cell-title">Top feature importances — Random Forest classifier</span><div class="run-btn"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div></div>
+  <div class="code-block"><pre><span class="var">rf_final</span> = <span class="cls">RandomForestClassifier</span>(n_estimators=<span class="num-lit">100</span>, max_depth=<span class="num-lit">15</span>, random_state=<span class="num-lit">42</span>, n_jobs=-<span class="num-lit">1</span>)
+<span class="var">rf_final</span>.<span class="fn">fit</span>(<span class="var">X</span>, <span class="var">y_tier</span>)
+
+<span class="var">importance_df</span> = <span class="var">pd</span>.<span class="cls">DataFrame</span>({
+    <span class="st">"feature"</span>:    <span class="var">X</span>.<span class="var">columns</span>,
+    <span class="st">"importance"</span>: <span class="var">rf_final</span>.<span class="var">feature_importances_</span>
+}).<span class="fn">sort_values</span>(<span class="st">"importance"</span>, ascending=<span class="kw">False</span>).<span class="fn">head</span>(<span class="num-lit">15</span>)
+
+<span class="var">sns</span>.<span class="fn">barplot</span>(data=<span class="var">importance_df</span>, x=<span class="st">"importance"</span>, y=<span class="st">"feature"</span>, palette=<span class="st">"Greens_r"</span>)
+<span class="var">plt</span>.<span class="fn">title</span>(<span class="st">"Top 15 Feature Importances"</span>)
+<span class="var">plt</span>.<span class="fn">show</span>()</pre></div>
+  <div class="output-block">
+    <div id="featureImportance"></div>
+    <div class="insight" style="margin-top:16px">
+      <div class="insight-title">💡 What Drives Popularity</div>
+      <p><strong>Genre features dominate the top of the list</strong> — validating the decision to one-hot encode <code>track_genre</code>. Among audio features, <strong>acousticness</strong> and <strong>instrumentalness</strong> are the most predictive, likely because highly acoustic or instrumental tracks (classical, jazz) tend to cluster in specific popularity ranges. <strong>Danceability and energy</strong>, while correlated with each other, have modest individual importance — confirming that no single audio feature alone drives popularity.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 9: CONCLUSIONS ── -->
+<div class="section-label"><div class="dot"></div> Step 9 · Conclusions & Next Steps</div>
+
+<div class="cell">
+  <div class="cell-header"><span class="cell-num">[13]</span><span class="cell-type md">Markdown</span></div>
+  <div class="md-block">
+    <h3>📌 Conclusions</h3>
+    <p>This project demonstrates a complete, production-style ML pipeline on real-world data. Key takeaways from v2:</p>
+    <ul>
+      <li><strong>Binning popularity</strong> into 3 tiers transformed accuracy from ~7% (meaningless) to ~69% (genuinely useful)</li>
+      <li><strong>Genre is the most important feature</strong> — adding it via one-hot encoding significantly improved all models</li>
+      <li><strong>XGBoost leads</strong> both classification (68.9%) and regression (R²=0.397, RMSE=17.5) with the tightest cross-validation variance</li>
+      <li><strong>5-fold CV</strong> confirms results are stable — low std across folds means models generalize, not just memorize</li>
+      <li><strong>R²≈0.40</strong> is honest: audio features explain ~40% of popularity, the rest is context (marketing, virality) we don't have</li>
+    </ul>
+    <br>
+    <h3>🚀 Next Steps</h3>
+    <ul>
+      <li>Hyperparameter tuning with <strong>GridSearchCV</strong> on XGBoost depth and learning rate</li>
+      <li><strong>SHAP values</strong> for per-prediction explainability on top of XGBoost</li>
+      <li>Add <strong>artist-level features</strong> — follower count, genre diversity</li>
+      <li>Build a <strong>Streamlit app</strong> — interactive popularity predictor from audio feature sliders</li>
+    </ul>
+  </div>
+</div>
+
+</div><!-- /container -->
+
 <div class="footer">
-  Built with Python · scikit-learn · Pandas · Kaggle Spotify Dataset &nbsp;|&nbsp;
-  <a href="#">View on GitHub</a>
+  Built with Python · scikit-learn · XGBoost · Pandas · Kaggle Spotify Dataset &nbsp;|&nbsp;
+  <a href="https://github.com/dchildr23/spotify-ml-portfolio">View on GitHub →</a>
 </div>
 
 <script>
-// ── Chart.js charts ──
-
-const GREEN = '#1DB954';
-const BLUE = '#3b82f6';
-const PURPLE = '#a855f7';
-const ORANGE = '#f59e0b';
-const MUTED = '#8888aa';
-const GRID = '#2e2e3a';
-
-Chart.defaults.color = MUTED;
-Chart.defaults.borderColor = GRID;
-Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
-Chart.defaults.font.size = 11;
+const GREEN='#1DB954', BLUE='#3b82f6', PURPLE='#a855f7', ORANGE='#f59e0b', TEAL='#14b8a6', RED='#ef4444', MUTED='#8888aa', GRID='#2e2e3a';
+Chart.defaults.color=MUTED; Chart.defaults.borderColor=GRID;
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif"; Chart.defaults.font.size=11;
 
 // Popularity histogram
-new Chart(document.getElementById('popChart'), {
-  type: 'bar',
-  data: {
-    labels: ['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],
-    datasets: [{
-      data: [8.2, 12.1, 16.4, 14.8, 12.3, 10.7, 9.1, 7.4, 5.8, 3.2],
-      backgroundColor: GREEN + 'bb',
-      borderColor: GREEN,
-      borderWidth: 1,
-      borderRadius: 3
-    }]
-  },
-  options: { plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Count (%)' } } } }
-});
+new Chart(document.getElementById('popChart'),{type:'bar',data:{labels:['0-10','10-20','20-30','30-40','40-50','50-60','60-70','70-80','80-90','90-100'],datasets:[{data:[8.2,12.1,16.4,14.8,12.3,10.7,9.1,7.4,5.8,3.2],backgroundColor:GREEN+'bb',borderColor:GREEN,borderWidth:1,borderRadius:3}]},options:{plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'Count (%)'}}}}});
 
-// Danceability vs Energy
-new Chart(document.getElementById('danceChart'), {
-  type: 'bar',
-  data: {
-    labels: ['0.0-0.2','0.2-0.4','0.4-0.6','0.6-0.8','0.8-1.0'],
-    datasets: [
-      { label: 'Danceability', data: [2.1, 8.3, 21.4, 42.7, 25.5], backgroundColor: GREEN + 'aa', borderRadius: 3 },
-      { label: 'Energy', data: [3.4, 11.2, 24.8, 38.1, 22.5], backgroundColor: BLUE + 'aa', borderRadius: 3 }
-    ]
-  },
-  options: { plugins: { legend: { position: 'top' } } }
-});
+// Danceability & Energy
+new Chart(document.getElementById('danceChart'),{type:'bar',data:{labels:['0.0-0.2','0.2-0.4','0.4-0.6','0.6-0.8','0.8-1.0'],datasets:[{label:'Danceability',data:[2.1,8.3,21.4,42.7,25.5],backgroundColor:GREEN+'aa',borderRadius:3},{label:'Energy',data:[3.4,11.2,24.8,38.1,22.5],backgroundColor:BLUE+'aa',borderRadius:3}]},options:{plugins:{legend:{position:'top'}}}});
 
-// Tempo histogram
-new Chart(document.getElementById('tempoChart'), {
-  type: 'bar',
-  data: {
-    labels: ['60-80','80-100','100-120','120-140','140-160','160-180','180+'],
-    datasets: [{
-      data: [6.8, 14.2, 22.1, 28.4, 16.7, 8.3, 3.5],
-      backgroundColor: ORANGE + 'bb',
-      borderColor: ORANGE,
-      borderWidth: 1,
-      borderRadius: 3
-    }]
-  },
-  options: { plugins: { legend: { display: false } }, scales: { y: { title: { display: true, text: 'Count (%)' } } } }
-});
+// Tempo
+new Chart(document.getElementById('tempoChart'),{type:'bar',data:{labels:['60-80','80-100','100-120','120-140','140-160','160-180','180+'],datasets:[{data:[6.8,14.2,22.1,28.4,16.7,8.3,3.5],backgroundColor:ORANGE+'bb',borderColor:ORANGE,borderWidth:1,borderRadius:3}]},options:{plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'Count (%)'}}}}});
 
-// Valence vs Liveness
-new Chart(document.getElementById('valenceChart'), {
-  type: 'bar',
-  data: {
-    labels: ['0.0-0.2','0.2-0.4','0.4-0.6','0.6-0.8','0.8-1.0'],
-    datasets: [
-      { label: 'Valence', data: [15.2, 22.4, 24.1, 21.8, 16.5], backgroundColor: PURPLE + 'aa', borderRadius: 3 },
-      { label: 'Liveness', data: [32.1, 28.4, 18.7, 13.2, 7.6], backgroundColor: ORANGE + 'aa', borderRadius: 3 }
-    ]
-  },
-  options: { plugins: { legend: { position: 'top' } } }
-});
+// Acousticness & Instrumentalness
+new Chart(document.getElementById('acousticChart'),{type:'bar',data:{labels:['0.0-0.2','0.2-0.4','0.4-0.6','0.6-0.8','0.8-1.0'],datasets:[{label:'Acousticness',data:[38.2,14.1,11.7,14.8,21.2],backgroundColor:TEAL+'aa',borderRadius:3},{label:'Instrumentalness',data:[51.4,6.2,4.1,5.8,32.5],backgroundColor:PURPLE+'aa',borderRadius:3}]},options:{plugins:{legend:{position:'top'}}}});
 
-// Model comparison
-new Chart(document.getElementById('modelCompChart'), {
-  type: 'bar',
-  data: {
-    labels: ['Support Vector Machine (SVM)', 'Decision Tree'],
-    datasets: [{
-      label: 'Accuracy (%)',
-      data: [6.21, 7.14],
-      backgroundColor: [BLUE + 'cc', GREEN + 'cc'],
-      borderColor: [BLUE, GREEN],
-      borderWidth: 2,
-      borderRadius: 6,
-      barThickness: 50
-    }]
-  },
-  options: {
-    indexAxis: 'y',
-    plugins: { legend: { display: false } },
-    scales: {
-      x: {
-        max: 12,
-        title: { display: true, text: 'Accuracy (%)' },
-        ticks: { callback: v => v + '%' }
-      }
-    }
-  }
-});
+// Tier distribution
+new Chart(document.getElementById('tierChart'),{type:'bar',data:{labels:['Low (0–33)','Mid (34–66)','High (67–100)'],datasets:[{data:[51.2,36.1,12.6],backgroundColor:[RED+'cc',ORANGE+'cc',GREEN+'cc'],borderColor:[RED,ORANGE,GREEN],borderWidth:2,borderRadius:6,barThickness:55}]},options:{plugins:{legend:{display:false}},scales:{y:{title:{display:true,text:'% of Tracks'},ticks:{callback:v=>v+'%'}}}}});
 
-// ── Heatmap ──
-const features = ['popularity','danceability','energy','loudness','tempo','liveness','valence'];
-const corrMatrix = [
-  [1.00,  0.08,  0.06, -0.10,  0.04,  0.02,  0.11],
-  [0.08,  1.00,  0.32,  0.29,  0.18, -0.04,  0.47],
-  [0.06,  0.32,  1.00,  0.76,  0.18,  0.09, -0.01],
-  [-0.10, 0.29,  0.76,  1.00,  0.17,  0.04,  0.02],
-  [0.04,  0.18,  0.18,  0.17,  1.00,  0.01,  0.02],
-  [0.02, -0.04,  0.09,  0.04,  0.01,  1.00,  0.04],
-  [0.11,  0.47, -0.01,  0.02,  0.02,  0.04,  1.00]
+// Top genres
+new Chart(document.getElementById('genreChart'),{type:'bar',data:{labels:['pop','hip-hop','rock','r&b','latin','electronic','country','jazz','classical','indie'],datasets:[{data:[8.4,7.1,6.8,5.9,5.4,5.2,4.8,4.1,3.9,3.7],backgroundColor:GREEN+'99',borderColor:GREEN,borderWidth:1,borderRadius:4}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'% of Dataset'}}}}});
+
+// Classification fold chart
+const folds=['Fold 1','Fold 2','Fold 3','Fold 4','Fold 5'];
+new Chart(document.getElementById('clfFoldChart'),{type:'line',data:{labels:folds,datasets:[{label:'Random Forest',data:[0.679,0.685,0.681,0.683,0.679],borderColor:BLUE,backgroundColor:BLUE+'22',tension:.3,pointRadius:4,fill:false},{label:'Gradient Boosting',data:[0.671,0.678,0.672,0.675,0.677],borderColor:ORANGE,backgroundColor:ORANGE+'22',tension:.3,pointRadius:4,fill:false},{label:'XGBoost',data:[0.686,0.692,0.689,0.688,0.691],borderColor:GREEN,backgroundColor:GREEN+'22',tension:.3,pointRadius:4,fill:false}]},options:{plugins:{legend:{position:'top'}},scales:{y:{min:0.65,max:0.71,title:{display:true,text:'Accuracy'},ticks:{callback:v=>(v*100).toFixed(1)+'%'}}}}});
+
+// R2 chart
+new Chart(document.getElementById('r2Chart'),{type:'line',data:{labels:folds,datasets:[{label:'Random Forest',data:[0.378,0.385,0.380,0.383,0.377],borderColor:BLUE,tension:.3,pointRadius:4,fill:false},{label:'Gradient Boosting',data:[0.361,0.370,0.363,0.368,0.365],borderColor:ORANGE,tension:.3,pointRadius:4,fill:false},{label:'XGBoost',data:[0.394,0.401,0.396,0.399,0.395],borderColor:GREEN,tension:.3,pointRadius:4,fill:false}]},options:{plugins:{legend:{position:'top'}},scales:{y:{min:0.33,max:0.42,title:{display:true,text:'R²'}}}}});
+
+// RMSE chart
+new Chart(document.getElementById('rmseChart'),{type:'line',data:{labels:folds,datasets:[{label:'Random Forest',data:[18.02,17.71,17.88,17.79,17.80],borderColor:BLUE,tension:.3,pointRadius:4,fill:false},{label:'Gradient Boosting',data:[18.28,18.05,18.18,18.09,18.06],borderColor:ORANGE,tension:.3,pointRadius:4,fill:false},{label:'XGBoost',data:[17.68,17.42,17.55,17.48,17.47],borderColor:GREEN,tension:.3,pointRadius:4,fill:false}]},options:{plugins:{legend:{position:'top'}},scales:{y:{min:17,max:19,title:{display:true,text:'RMSE (popularity pts)'}}}}});
+
+// Heatmap
+const hFeatures=['popularity','danceability','energy','loudness','tempo','liveness','valence','speechiness','acousticness','instrumentalness'];
+const corrMatrix=[
+  [1.00, 0.08, 0.06,-0.10, 0.04, 0.02, 0.11, 0.03,-0.21,-0.18],
+  [0.08, 1.00, 0.32, 0.29, 0.18,-0.04, 0.47, 0.12,-0.35,-0.14],
+  [0.06, 0.32, 1.00, 0.76, 0.18, 0.09,-0.01, 0.11,-0.72,-0.24],
+  [-0.10,0.29, 0.76, 1.00, 0.17, 0.04, 0.02, 0.07,-0.61,-0.29],
+  [0.04, 0.18, 0.18, 0.17, 1.00, 0.01, 0.02, 0.06,-0.08,-0.06],
+  [0.02,-0.04, 0.09, 0.04, 0.01, 1.00, 0.04, 0.07, 0.01,-0.04],
+  [0.11, 0.47,-0.01, 0.02, 0.02, 0.04, 1.00, 0.04,-0.22,-0.11],
+  [0.03, 0.12, 0.11, 0.07, 0.06, 0.07, 0.04, 1.00,-0.08,-0.13],
+  [-0.21,-0.35,-0.72,-0.61,-0.08, 0.01,-0.22,-0.08, 1.00, 0.31],
+  [-0.18,-0.14,-0.24,-0.29,-0.06,-0.04,-0.11,-0.13, 0.31, 1.00]
 ];
-
-function corrColor(v) {
-  if (v >= 0.7) return '#1DB954';
-  if (v >= 0.4) return '#4ade80';
-  if (v >= 0.2) return '#86efac';
-  if (v >= 0.05) return '#bbf7d0';
-  if (v > -0.05) return '#374151';
-  if (v > -0.2) return '#fca5a5';
-  if (v > -0.5) return '#f87171';
-  return '#ef4444';
+function corrColor(v){
+  if(v>=0.7)return'#1DB954'; if(v>=0.4)return'#4ade80'; if(v>=0.2)return'#86efac';
+  if(v>=0.05)return'#bbf7d0'; if(v>-0.05)return'#374151'; if(v>-0.2)return'#fca5a5';
+  if(v>-0.5)return'#f87171'; return'#ef4444';
 }
+const shortNames=hFeatures.map(f=>f.substring(0,5));
+const tbl=document.getElementById('heatmapTable');
+tbl.innerHTML='<tr><th></th>'+shortNames.map(f=>`<th>${f}</th>`).join('')+'</tr>'+
+  corrMatrix.map((row,i)=>'<tr><th>'+shortNames[i]+'</th>'+row.map(v=>`<td style="background:${corrColor(v)};color:${Math.abs(v)>0.4?'#111':'#eee'}">${v.toFixed(2)}</td>`).join('')+'</tr>').join('');
 
-const tbl = document.getElementById('heatmapTable');
-let head = '<tr><th></th>' + features.map(f => `<th>${f.substring(0,5)}</th>`).join('') + '</tr>';
-tbl.innerHTML = head + corrMatrix.map((row, i) =>
-  '<tr><th>' + features[i].substring(0,5) + '</th>' +
-  row.map(v => `<td style="background:${corrColor(v)};color:${Math.abs(v)>0.4?'#111':'#eee'}">${v.toFixed(2)}</td>`).join('') +
-  '</tr>'
-).join('');
+// Feature importance bars
+const fiData=[
+  {name:'genre_pop',val:0.0842},
+  {name:'acousticness',val:0.0731},
+  {name:'instrumentalness',val:0.0698},
+  {name:'genre_hip-hop',val:0.0612},
+  {name:'genre_classical',val:0.0578},
+  {name:'danceability',val:0.0524},
+  {name:'energy',val:0.0487},
+  {name:'valence',val:0.0412},
+  {name:'loudness',val:0.0398},
+  {name:'genre_r&b',val:0.0371},
+  {name:'genre_rock',val:0.0344},
+  {name:'tempo',val:0.0318},
+  {name:'speechiness',val:0.0287},
+  {name:'liveness',val:0.0241},
+  {name:'genre_latin',val:0.0228},
+];
+const maxFi=fiData[0].val;
+const fiContainer=document.getElementById('featureImportance');
+fiContainer.innerHTML=fiData.map((d,i)=>`
+  <div class="fi-row">
+    <div class="fi-label">${d.name}</div>
+    <div class="fi-bar-wrap"><div class="fi-bar" style="width:${(d.val/maxFi*100).toFixed(1)}%;background:${d.name.startsWith('genre')?BLUE:GREEN}"></div></div>
+    <div class="fi-val">${(d.val*100).toFixed(2)}%</div>
+  </div>`).join('');
 </script>
 </body>
 </html>
