@@ -63,7 +63,7 @@ spotify-ml-portfolio/
 ## 🔭 Potential Next Steps
 
 - [ ] **Hyperparameter tuning** — GridSearchCV / RandomizedSearchCV on all models
-- [ ] **SHAP values** — explainability layer on top of XGBoost predictions
+- [ ] **SHAP values** — explainability layer on top of XGBoost predictions. Ex: assign each feature a contribution score to reduce bias on energy/danceability. 
 - [ ] **Artist-level features** — follower count, genre diversity as additional signals
 - [ ] **Time-based and marketing analysis** — does release year and marketing spend through social media affect popularity trends?
 
