@@ -143,6 +143,9 @@ regressors = {
     "Random Forest": RandomForestRegressor(
         n_estimators=100, max_depth=15, random_state=42, n_jobs=-1
     ),
+    "Gradient Boosting": GradientBoostingRegressor(
+        n_estimators=100, learning_rate=0.1, max_depth=5, random_state=42
+    ),
 }
 if XGBOOST_AVAILABLE:
     regressors["XGBoost"] = XGBRegressor(
