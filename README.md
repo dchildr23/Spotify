@@ -65,5 +65,5 @@ spotify-ml-portfolio/
 - [ ] **Hyperparameter tuning** — GridSearchCV / RandomizedSearchCV on all models
 - [ ] **SHAP values** — explainability layer on top of XGBoost predictions
 - [ ] **Artist-level features** — follower count, genre diversity as additional signals
-- [ ] **Time-based analysis** — does release year affect popularity trends?
-- [ ] **Streamlit app** — interactive popularity predictor from audio feature inputs
+- [ ] **Time-based and marketing analysis** — does release year and marketing spend through social media affect popularity trends?
+
