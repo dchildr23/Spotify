@@ -23,7 +23,7 @@ This project uses the **Spotify Tracks Dataset** from Kaggle (~114,000 tracks) t
 7. **Regression** — Random Forest & XGBoost predicting exact score (R² + RMSE)
 8. **Feature importance** — identifying the top drivers of popularity
 
-📊 **[View the live interactive notebook →](https://dchildr23.github.io/spotify-ml-portfolio/spotify_ml_notebook.html)**
+📊 **[View the live interactive notebook →](https://dchildr23.github.io/Spotify/Spotify%20ML%20Notebook.html)**
 
 ---
 
@@ -52,8 +52,8 @@ This project uses the **Spotify Tracks Dataset** from Kaggle (~114,000 tracks) t
 ```
 spotify-ml-portfolio/
 ├── spotify_ml_notebook.html    # Rendered interactive notebook (portfolio view)
-├── spotify analysis v2.py      # Full pipeline — v2 with all improvements
-├── popularity predictor.py   # Original v1 script (SVM + Decision Tree)
+├── spotify analysis v2.py      # Random Forest and XGBoost — v2 with all improvements
+├── spotify analysis v1.py   # Original v1 script (SVM + Decision Tree)
 ├── spotify_ml_results.png      # Model results chart
 ├── feature_importance.png      # Feature importance chart 
 ├── Spotify Tracks Dataset.csv  # Raw data 
