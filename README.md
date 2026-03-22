@@ -45,7 +45,7 @@ This project uses the **Spotify Tracks Dataset** from Kaggle (~114,000 tracks) t
 - **Pandas / NumPy** — data manipulation and sampling
 - **Matplotlib / Seaborn** — visualizations
 - **scikit-learn** — StandardScaler, RandomForest, GradientBoosting, cross_val_score
-- **XGBoost** *(optional)* — XGBClassifier, XGBRegressor
+- **XGBoost** — XGBClassifier, XGBRegressor
 
 ## 📂 Project Structure
 
